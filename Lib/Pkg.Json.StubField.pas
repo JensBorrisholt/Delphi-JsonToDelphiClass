@@ -22,7 +22,7 @@ type
     FName: string;
   strict protected
     procedure SetName(const Value: string); override;
-    class function GetTypeAsString(AType: TJsonType): string; overload;
+    class function GetTypeAsString(aJsonType: TJsonType): string; overload;
     function GetTypeAsString: string; overload; virtual;
   public
     function IsArrayField: Boolean;
@@ -378,9 +378,6 @@ begin
 
     for StubField in FItems do
     begin
-      if (StubField.FieldType = jtUnknown) or ((StubField is TStubContainerField) and ((StubField as TStubContainerField).ContainedType = jtUnknown)) then
-        Lines.AddFormat('  property %s: %s read %s write %s;', [StubField.PropertyName, StubField.TypeAsString, StubField.FieldName, StubField.FieldName]);
-
       if StubField.IsArrayField then
       begin
         StubArrayField := StubField as TStubArrayField;
@@ -443,11 +440,11 @@ begin
     FParentClass.Items.Add(Self);
 end;
 
-class function TStubField.GetTypeAsString(AType: TJsonType): string;
+class function TStubField.GetTypeAsString(aJsonType: TJsonType): string;
 begin
-  case AType of
+  case aJsonType of
     jtUnknown:
-      Result := 'Unknown';
+      Result := 'string';
     jtString:
       Result := 'string';
     jtTrue, jtFalse:
