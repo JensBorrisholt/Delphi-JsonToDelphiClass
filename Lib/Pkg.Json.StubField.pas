@@ -379,7 +379,7 @@ begin
     for StubField in FItems do
     begin
       if (StubField.FieldType = jtUnknown) or ((StubField is TStubContainerField) and ((StubField as TStubContainerField).ContainedType = jtUnknown)) then
-        raise EJsonMapper.CreateFmt('The property [%s] has unknown type!', [StubField.PropertyName]);
+        Lines.AddFormat('  property %s: %s read %s write %s;', [StubField.PropertyName, StubField.TypeAsString, StubField.FieldName, StubField.FieldName]);
 
       if StubField.IsArrayField then
       begin

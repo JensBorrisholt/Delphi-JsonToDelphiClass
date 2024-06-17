@@ -30,6 +30,9 @@ begin
   if aJsonValue = nil then
     exit(jtObject);
 
+  if aJsonValue is TJSONNull then
+    exit(jtUnknown);
+
   if aJsonValue is TJSONObject then
     exit(jtObject);
 

@@ -70,10 +70,11 @@ begin
   begin
     JsonType := GetJsonType(aJsonValue);
 
-    var Name := (aJsonValue as TJsonString).Value;
+    var
+    Name := 'Element';
 
-    if Name = '' then
-      Name := 'Element';
+    if (aJsonValue is TJsonString) then
+      Name := (aJsonValue as TJsonString).Value;
 
     TStubField.Create(aParentClass, Name, JsonType);
     exit;
@@ -86,8 +87,8 @@ begin
     JsonType := GetJsonType(JSONValue);
 
     case JsonType of
-      jtUnknown:
-        { do nothing };
+      jtUnknown,
+      // { do nothing };
       jtObject:
         begin
           StubClass := TStubClass.Construct(aParentClass, JsonPair.JsonString.Value, Self.FStubClasses);
