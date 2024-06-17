@@ -1,6 +1,37 @@
 Delphi-JsonToDelphiClass
 ========================
 
+## Fixes & Features: 16th June 2024 ##
+### Features ###
+* JSON null property are now mapped to a string.
+
+Eg this JSON
+```json
+{
+    {
+        "createdAt": null,
+        "updatedAt": "2013-05-28T15:47:57.962Z",
+        "username": "jacquelyn88"
+    }
+}
+```
+
+Generates the following DTO:
+```pascal
+  TItems = class
+  private
+    FCreatedAt: string;
+    [SuppressZero]
+    FUpdatedAt: TDateTime;
+    FUsername: string;
+  published
+    property CreatedAt: string read FCreatedAt write FCreatedAt;
+    property UpdatedAt: TDateTime read FUpdatedAt write FUpdatedAt;
+    property Username: string read FUsername write FUsername;
+  end;
+```
+
+
 ## Fixes & Features: 04th February 2024 ##
 ### Features ###
 * Added a Demo, using and authenticated endpoint
@@ -26,7 +57,7 @@ Thanks to [DummyJSON](https://dummyjson.com/) for providing this service.
 * Added Clone function on TJsonDTO class
 
 ### Bugs: ###
-* Unittest TestDateTime didnt pass under Delphi 12
+* Unittest TestDateTime didn't pass under Delphi 12
 * Added missing Reserved words
 
 ## Fixes & Features: 13th January 2024 ##
@@ -163,7 +194,7 @@ E.g this JSON generated faulty code:
 * Allways use JsonName property annotation  (Setting)
 * Support for objects with diffrents properties in an Array
 
-Eg this JSON 
+Eg this JSON
 ```json
 {
    "ArrayTest":[
@@ -172,7 +203,7 @@ Eg this JSON
       },
       {
            "S2":"True"
-      }      
+      }
    ]
 }
 ```

@@ -26,9 +26,13 @@ var
   b: Boolean;
   d: Double;
   E: Extended;
+  DT: TdateTime;
 begin
   if aJsonValue = nil then
     exit(jtObject);
+
+  if aJsonValue is TJSONNull then
+    exit(jtUnknown);
 
   if aJsonValue is TJSONObject then
     exit(jtObject);
@@ -56,12 +60,8 @@ begin
   begin
     Value := aJsonValue.AsType<string>;
 
-    try
-      ISO8601ToDate(Value);
+    if TryISO8601ToDate(Value, DT) then
       exit(jtDateTime);
-    except
-
-    end;
 
     if TryStrToFloat(Value, E) then
       Result := jtString
