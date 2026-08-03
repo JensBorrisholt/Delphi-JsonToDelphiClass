@@ -105,6 +105,9 @@ _UpgradeReport_Files/
 bin/
 obj/
 TestResults/
+
+# Refactored project build output
+/Refactored/**/build/
 ###################
 # Web publish log #
 ###################
