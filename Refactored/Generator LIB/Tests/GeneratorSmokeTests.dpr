@@ -4,6 +4,9 @@ program GeneratorSmokeTests;
 
 uses
   System.SysUtils,
+  System.Generics.Collections,
+  REST.Json.Types,
+  Pkg.Json.DTO,
   Pkg.Json.Generator in '..\Pkg.Json.Generator.pas',
   Pkg.Json.Generator.Builder in '..\Pkg.Json.Generator.Builder.pas',
   Pkg.Json.Generator.Errors in '..\Pkg.Json.Generator.Errors.pas',
@@ -11,6 +14,38 @@ uses
   Pkg.Json.Generator.Model in '..\Pkg.Json.Generator.Model.pas',
   Pkg.Json.Generator.Naming in '..\Pkg.Json.Generator.Naming.pas',
   Pkg.Json.Generator.Options in '..\Pkg.Json.Generator.Options.pas';
+
+type
+  TMatrixDTO = class(TJsonDTO)
+  private
+    [JSONName('matrix')]
+    FMatrixArray: TArray<TArray<Integer>>;
+    [JSONMarshalled(False)]
+    FMatrix: TObjectList<TList<Integer>>;
+    function GetMatrix: TObjectList<TList<Integer>>;
+  protected
+    function GetAsJson: string; override;
+  public
+    destructor Destroy; override;
+    property Matrix: TObjectList<TList<Integer>> read GetMatrix;
+  end;
+
+destructor TMatrixDTO.Destroy;
+begin
+  GetMatrix.Free;
+  inherited;
+end;
+
+function TMatrixDTO.GetAsJson: string;
+begin
+  RefreshArray2D<Integer>(FMatrix, FMatrixArray);
+  Result := inherited;
+end;
+
+function TMatrixDTO.GetMatrix: TObjectList<TList<Integer>>;
+begin
+  Result := List2D<Integer>(FMatrix, FMatrixArray);
+end;
 
 procedure Check(ACondition: Boolean; const AMessage: string);
 begin
@@ -109,11 +144,52 @@ begin
   end;
 end;
 
+procedure TestTwoDimensionalArray;
+var
+  Generator: TJsonToDelphiGenerator;
+  Source: string;
+begin
+  Generator := TJsonToDelphiGenerator.Create(DefaultOptions);
+  try
+    Generator.Parse('[[1,2],[3,4]]');
+    Source := Generator.GenerateUnit;
+    Check(Source.Contains('FItemsArray: TArray<TArray<Integer>>;'),
+      '2D array bridge must preserve the JSON array shape');
+    Check(Source.Contains('property Items: TObjectList<TList<Integer>>'),
+      '2D arrays must be exposed as lists');
+    Check(Source.Contains('RefreshArray2D<Integer>'),
+      '2D lists must be synchronized before serialization');
+  finally
+    Generator.Free;
+  end;
+end;
+
+procedure TestTwoDimensionalArrayRuntime;
+var
+  DTO: TMatrixDTO;
+  Json: string;
+begin
+  DTO := TMatrixDTO.Create;
+  try
+    DTO.AsJson := '{"matrix":[[1,2],[3,4]]}';
+    Check(DTO.Matrix.Count = 2, '2D JSON must create two list rows');
+    Check(DTO.Matrix[1][0] = 3, '2D JSON values must deserialize');
+    DTO.Matrix[1][0] := 30;
+    Json := DTO.AsJson;
+    Check(Json.Contains('[[1,2],[30,4]]'),
+      'Changed 2D list values must serialize as nested JSON arrays');
+  finally
+    DTO.Free;
+  end;
+end;
+
 begin
   try
     TestObjectGeneration;
     TestPrimitiveRootArray;
     TestEmptyArray;
+    TestTwoDimensionalArray;
+    TestTwoDimensionalArrayRuntime;
     TestArrayTypeConflictLocation;
     Writeln('All generator smoke tests passed.');
   except

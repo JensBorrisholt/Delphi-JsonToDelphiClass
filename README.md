@@ -1,6 +1,82 @@
 Delphi-JsonToDelphiClass
 ========================
 
+## Fixes & Features: 03rd August 2026 ##
+
+### Features ###
+
+* The generator engine has been rebuilt from the ground up. This is not an
+  incremental cleanup of the previous implementation: the old monolithic,
+  stateful generation flow has been replaced by a compiler-style pipeline.
+  JSON traversal, validation, type inference, naming, class reuse and Delphi
+  source emission are no longer intertwined. Each stage now has an explicit
+  input, output and responsibility:
+
+  * `TJsonToDelphiGenerator` is the small public facade used by the GUI and
+    other clients.
+  * `TJsonSourceValidator` validates array shapes and element compatibility
+    directly against the source text, retaining JSON paths and character
+    ranges for useful error reporting.
+  * `TJsonModelBuilder` traverses the parsed JSON and builds an intermediate
+    model of classes, fields, relationships and array dimensions.
+  * `TDelphiNaming` owns identifier conversion, PascalCase handling, reserved
+    name decisions and generated class names.
+  * `TGeneratorOptions` captures the settings for one generation, preventing
+    mutable GUI settings from leaking into an active run.
+  * `TDelphiUnitWriter` turns the completed model into Delphi source without
+    parsing JSON or making structural decisions.
+
+  JSON is first validated and converted into a language-independent model;
+  Delphi source is emitted only after that model is complete. All generation
+  state belongs to a single generator instance and is cleared between parses.
+  Class reuse is scoped to the model currently being generated, and the
+  legacy naming and output rules are covered by dedicated compatibility tests.
+  The GUI is now only a client of the generator instead of being part of its
+  internal workflow. Type inference, validation and source emission can
+  therefore be tested and evolved independently.
+* Added support for homogeneous two-dimensional arrays of scalar values.
+  Lists remain the public Delphi API; dynamic arrays are used only as the
+  internal bridge required by Delphi's JSON serializer.
+
+For example, this JSON:
+
+```json
+{
+  "matrix": [
+    [1, 2],
+    [3, 4]
+  ]
+}
+```
+
+Generates a list-based property:
+
+```pascal
+property Matrix: TObjectList<TList<Integer>> read GetMatrix;
+```
+
+Rows must contain compatible values. A conflicting input such as
+`[[1, 2], ["3", "4"]]` reports the failing JSON path instead of silently
+choosing an incorrect Delphi type.
+
+* Added a completely new Generator GUI written in VCL. The previous
+  FireMonkey GUI has been replaced without removing the existing conversion
+  features.
+* Added rule-based syntax highlighting for both JSON input and generated
+  Delphi source.
+* Generator errors include the JSON path and source range. The corresponding
+  text is selected in the JSON editor when generation fails.
+* The refactored source tree is self-contained under `Refactored`; it does not
+  depend on project units from the legacy directory structure.
+
+### Fixes ###
+
+* Mixed array element types now produce a precise error containing the
+  expected type, actual type and JSON path.
+* Generic list serialization resolves the matching published property through
+  RTTI, avoiding the internal `TList<T>` implementation data that Delphi's
+  default serializer would otherwise emit.
+
 ## Fixes & Features: 16th June 2024 ##
 ### Features ###
 * JSON null property are now mapped to a string.

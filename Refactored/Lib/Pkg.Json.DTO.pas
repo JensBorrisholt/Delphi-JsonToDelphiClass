@@ -8,7 +8,11 @@ type
   TArrayMapper = class
   protected
     procedure RefreshArray<T>(aSource: TList<T>; var aDestination: TArray<T>);
+    procedure RefreshArray2D<T>(aSource: TObjectList<TList<T>>;
+      var aDestination: TArray<TArray<T>>);
     function List<T>(var aList: TList<T>; aSource: TArray<T>): TList<T>;
+    function List2D<T>(var aList: TObjectList<TList<T>>;
+      aSource: TArray<TArray<T>>): TObjectList<TList<T>>;
     function ObjectList<T: class>(var aList: TObjectList<T>; aSource: TArray<T>): TObjectList<T>;
   public
     constructor Create; virtual;
@@ -209,6 +213,25 @@ begin
   Exit(aList);
 end;
 
+function TArrayMapper.List2D<T>(var aList: TObjectList<TList<T>>;
+  aSource: TArray<TArray<T>>): TObjectList<TList<T>>;
+var
+  Row: TArray<T>;
+  RowList: TList<T>;
+begin
+  if aList = nil then
+  begin
+    aList := TObjectList<TList<T>>.Create(True);
+    for Row in aSource do
+    begin
+      RowList := TList<T>.Create;
+      RowList.AddRange(Row);
+      aList.Add(RowList);
+    end;
+  end;
+  Result := aList;
+end;
+
 function TArrayMapper.ObjectList<T>(var aList: TObjectList<T>; aSource: TArray<T>): TObjectList<T>;
 var
   Element: T;
@@ -227,6 +250,18 @@ procedure TArrayMapper.RefreshArray<T>(aSource: TList<T>; var aDestination: TArr
 begin
   if aSource <> nil then
     aDestination := aSource.ToArray;
+end;
+
+procedure TArrayMapper.RefreshArray2D<T>(aSource: TObjectList<TList<T>>;
+  var aDestination: TArray<TArray<T>>);
+var
+  I: Integer;
+begin
+  if aSource = nil then
+    Exit;
+  SetLength(aDestination, aSource.Count);
+  for I := 0 to aSource.Count - 1 do
+    aDestination[I] := aSource[I].ToArray;
 end;
 
 type

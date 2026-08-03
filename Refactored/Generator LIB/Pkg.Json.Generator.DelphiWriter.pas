@@ -16,7 +16,9 @@ type
     function HasComplexFields(AClass: TGeneratorClass): Boolean;
     function JsonNameAttribute(AField: TGeneratorField): string;
     function ListType(AField: TGeneratorField): string;
+    function ListStorageType(AField: TGeneratorField): string;
     function PropertyName(AField: TGeneratorField): string;
+    function ArrayStorageType(AField: TGeneratorField): string;
     procedure WriteClassDeclaration(ALines: TStrings; AClass: TGeneratorClass;
       const ABaseClass: string);
     procedure WriteClassImplementation(ALines: TStrings; AClass: TGeneratorClass);
@@ -105,6 +107,24 @@ begin
     Result := 'TList';
 end;
 
+function TDelphiUnitWriter.ArrayStorageType(
+  AField: TGeneratorField): string;
+begin
+  if AField.ArrayDepth = 2 then
+    Result := 'TArray<TArray<' + FieldType(AField) + '>>'
+  else
+    Result := 'TArray<' + FieldType(AField) + '>';
+end;
+
+function TDelphiUnitWriter.ListStorageType(
+  AField: TGeneratorField): string;
+begin
+  if AField.ArrayDepth = 2 then
+    Result := 'TObjectList<TList<' + FieldType(AField) + '>>'
+  else
+    Result := ListType(AField) + '<' + FieldType(AField) + '>';
+end;
+
 function TDelphiUnitWriter.PropertyName(AField: TGeneratorField): string;
 begin
   if ReservedWords.IndexOf(AField.DelphiName.ToLower) >= 0 then
@@ -131,10 +151,13 @@ begin
         begin
           ALines.AddFormat('    [%s%s]', [JsonNameAttribute(Field),
             IfThen(Field.ContainedType = jtObject, ', JSONMarshalled(False)', '')]);
-          ALines.AddFormat('    F%sArray: TArray<%s>;', [Field.DelphiName, FieldType(Field)]);
-          if Field.ContainedType = jtObject then ALines.Add('    [GenericListReflect]')
+          ALines.AddFormat('    F%sArray: %s;', [Field.DelphiName,
+            ArrayStorageType(Field)]);
+          if Field.ArrayDepth = 2 then ALines.Add('    [JSONMarshalled(False)]')
+          else if Field.ContainedType = jtObject then ALines.Add('    [GenericListReflect]')
           else ALines.Add('    [JSONMarshalled(False)]');
-          ALines.AddFormat('    F%s: %s<%s>;', [Field.DelphiName, ListType(Field), FieldType(Field)]);
+          ALines.AddFormat('    F%s: %s;', [Field.DelphiName,
+            ListStorageType(Field)]);
         end;
       gfObject:
         begin
@@ -156,8 +179,8 @@ begin
     end;
   for Field in AClass.Fields do
     if Field.Kind = gfArray then
-      ALines.AddFormat('    function Get%s: %s<%s>;', [Field.DelphiName,
-        ListType(Field), FieldType(Field)]);
+      ALines.AddFormat('    function Get%s: %s;', [Field.DelphiName,
+        ListStorageType(Field)]);
   if HasArrays(AClass) then
   begin
     ALines.Add('  protected');
@@ -166,8 +189,8 @@ begin
   if AClass.Fields.Count > 0 then ALines.Add('  published');
   for Field in AClass.Fields do
     if Field.Kind = gfArray then
-      ALines.AddFormat('    property %s: %s<%s> read Get%s;', [PropertyName(Field),
-        ListType(Field), FieldType(Field), Field.DelphiName])
+      ALines.AddFormat('    property %s: %s read Get%s;', [PropertyName(Field),
+        ListStorageType(Field), Field.DelphiName])
     else if Field.Kind = gfObject then
       ALines.AddFormat('    property %s: %s read F%s;', [PropertyName(Field),
         FieldType(Field), Field.DelphiName])
@@ -208,6 +231,17 @@ begin
   ALines.Add('  inherited;'); ALines.Add('end;');
   for Field in AClass.Fields do if Field.Kind = gfArray then
   begin
+    if Field.ArrayDepth = 2 then
+    begin
+      ALines.Add('');
+      ALines.AddFormat('function %s.Get%s: %s;', [AClass.Name,
+        Field.DelphiName, ListStorageType(Field)]);
+      ALines.Add('begin');
+      ALines.AddFormat('  Result := List2D<%s>(F%s, F%sArray);',
+        [FieldType(Field), Field.DelphiName, Field.DelphiName]);
+      ALines.Add('end;');
+      Continue;
+    end;
     if Field.ContainedType = jtObject then Prefix := 'Object' else Prefix := '';
     ALines.Add('');
     ALines.AddFormat('function %s.Get%s: T%sList<%s>;', [AClass.Name,
@@ -222,8 +256,12 @@ begin
     ALines.Add(''); ALines.AddFormat('function %s.GetAsJson: string;', [AClass.Name]);
     ALines.Add('begin');
     for Field in AClass.Fields do if Field.Kind = gfArray then
-      ALines.AddFormat('  RefreshArray<%s>(F%s, F%sArray);', [FieldType(Field),
-        Field.DelphiName, Field.DelphiName]);
+      if Field.ArrayDepth = 2 then
+        ALines.AddFormat('  RefreshArray2D<%s>(F%s, F%sArray);',
+          [FieldType(Field), Field.DelphiName, Field.DelphiName])
+      else
+        ALines.AddFormat('  RefreshArray<%s>(F%s, F%sArray);',
+          [FieldType(Field), Field.DelphiName, Field.DelphiName]);
     ALines.Add('  Result := inherited;'); ALines.Add('end;');
   end;
 end;

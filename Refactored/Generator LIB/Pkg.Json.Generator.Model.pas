@@ -13,6 +13,7 @@ type
 
   TGeneratorField = class
   private
+    FArrayDepth: Integer;
     FContainedType: TJsonType;
     FDelphiName: string;
     FFieldClass: TGeneratorClass;
@@ -21,6 +22,8 @@ type
     FNeedsJsonNameAttribute: Boolean;
     FValueType: TJsonType;
   public
+    constructor Create;
+    property ArrayDepth: Integer read FArrayDepth write FArrayDepth;
     property ContainedType: TJsonType read FContainedType write FContainedType;
     property DelphiName: string read FDelphiName write FDelphiName;
     property FieldClass: TGeneratorClass read FFieldClass write FFieldClass;
@@ -68,6 +71,12 @@ implementation
 
 uses
   System.Generics.Defaults, System.SysUtils;
+
+constructor TGeneratorField.Create;
+begin
+  inherited;
+  FArrayDepth := 1;
+end;
 
 constructor TGeneratorClass.Create;
 begin

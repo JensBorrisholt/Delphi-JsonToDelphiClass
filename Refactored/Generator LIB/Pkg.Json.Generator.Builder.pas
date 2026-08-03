@@ -16,6 +16,7 @@ type
     function AddClass(AParent: TGeneratorClass; const AJsonName: string; ANeedsSourceCode: Boolean = True): TGeneratorClass;
     function AddField(AClass: TGeneratorClass; const AJsonName: string; AKind: TGeneratorFieldKind; AValueType: TJsonType): TGeneratorField;
     function ArrayItemType(AArray: TJSONArray): TJsonType;
+    function NestedArrayItemType(AArray: TJSONArray): TJsonType;
     procedure ProcessObject(AObject: TJSONObject; AClass: TGeneratorClass);
     procedure ProcessValue(const AJsonName: string; AValue: TJSONValue; AClass: TGeneratorClass);
   public
@@ -85,6 +86,21 @@ begin
   end;
 end;
 
+function TJsonModelBuilder.NestedArrayItemType(
+  AArray: TJSONArray): TJsonType;
+var
+  Item: TJSONValue;
+begin
+  Result := jtUnknown;
+  for Item in AArray do
+    if Item is TJSONArray then
+    begin
+      Result := ArrayItemType(TJSONArray(Item));
+      if Result <> jtUnknown then
+        Exit;
+    end;
+end;
+
 procedure TJsonModelBuilder.Build(const AJson, ARootClassName: string);
 var
   JsonValue: TJSONValue;
@@ -121,7 +137,17 @@ begin
           RootField.FieldClass := ItemClass;
 
           if ItemType = jtArray then
-            raise EJsonGenerator.Create('Nested arrays are not supported');
+          begin
+            RootField.ArrayDepth := 2;
+            RootField.ContainedType := NestedArrayItemType(
+              TJSONArray(JsonValue));
+            if RootField.ContainedType = jtArray then
+              raise EJsonGenerator.Create(
+                'Arrays with more than two dimensions are not supported');
+            if RootField.ContainedType = jtObject then
+              raise EJsonGenerator.Create(
+                'Two-dimensional object arrays are not supported');
+          end;
 
           if ItemType = jtObject then
             for Item in TJSONArray(JsonValue) do
@@ -168,7 +194,20 @@ begin
         ArrayValue := TJSONArray(AValue);
         ItemType := ArrayItemType(ArrayValue);
         if ItemType = jtArray then
-          raise EJsonGenerator.CreateFmt('Nested array is not supported: %s', [AJsonName]);
+        begin
+          Field := AddField(AClass, AJsonName, gfArray, jtArray);
+          Field.ArrayDepth := 2;
+          Field.ContainedType := NestedArrayItemType(ArrayValue);
+          if Field.ContainedType = jtArray then
+            raise EJsonGenerator.CreateFmt(
+              'Arrays with more than two dimensions are not supported: %s',
+              [AJsonName]);
+          if Field.ContainedType = jtObject then
+            raise EJsonGenerator.CreateFmt(
+              'Two-dimensional object arrays are not supported: %s',
+              [AJsonName]);
+          Exit;
+        end;
         FieldClass := AddClass(AClass, AJsonName, ItemType = jtObject);
         Field := AddField(AClass, AJsonName, gfArray, jtArray);
         Field.ContainedType := ItemType;
