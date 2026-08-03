@@ -3,24 +3,30 @@ unit Pkg.Json.Generator.Builder;
 interface
 
 uses
-  System.Json, System.SysUtils,
-  Pkg.Json.Generator.Model, Pkg.Json.Generator.Naming,
-  Pkg.Json.Generator.Options, Pkg.Json.Generator.Errors,
-  Pkg.Json.JsonValueHelper;
+  System.Json, System.SysUtils, System.Generics.Collections,
+  Pkg.Json.Generator.Model, Pkg.Json.Generator.Errors,
+  Pkg.Json.Generator.Validation;
 
 type
   TJsonModelBuilder = class
   private
     FModel: TGeneratorModel;
-    FNaming: TDelphiNaming;
-    function AddClass(AParent: TGeneratorClass; const AJsonName: string; ANeedsSourceCode: Boolean = True): TGeneratorClass;
-    function AddField(AClass: TGeneratorClass; const AJsonName: string; AKind: TGeneratorFieldKind; AValueType: TJsonType): TGeneratorField;
-    function ArrayItemType(AArray: TJSONArray): TJsonType;
-    function NestedArrayItemType(AArray: TJSONArray): TJsonType;
-    procedure ProcessObject(AObject: TJSONObject; AClass: TGeneratorClass);
-    procedure ProcessValue(const AJsonName: string; AValue: TJSONValue; AClass: TGeneratorClass);
+    FLocations: TDictionary<string, TJsonSourceLocation>;
+    function AddClass(AParent: TGeneratorClass; const AJsonName,
+      AJsonPath: string): TGeneratorClass;
+    function AddField(AClass: TGeneratorClass; const AJsonName,
+      AJsonPath: string): TGeneratorField;
+    function ArrayType(AArray: TJSONArray; AParent: TGeneratorClass;
+      const AJsonName, AJsonPath: string): TGeneratorType;
+    function ScalarType(AValue: TJSONValue): TGeneratorType;
+    procedure MarkOptionalFields(AArray: TJSONArray;
+      AClass: TGeneratorClass);
+    procedure ProcessObject(AObject: TJSONObject; AClass: TGeneratorClass;
+      const AJsonPath: string);
+    procedure ProcessValue(const AJsonName, AJsonPath: string;
+      AValue: TJSONValue; AClass: TGeneratorClass);
   public
-    constructor Create(AModel: TGeneratorModel; const AOptions: TGeneratorOptions);
+    constructor Create(AModel: TGeneratorModel);
     destructor Destroy; override;
     procedure Build(const AJson, ARootClassName: string);
   end;
@@ -28,135 +34,147 @@ type
 implementation
 
 uses
-  Pkg.Json.Generator.Validation;
+  Pkg.Json.JsonValueHelper;
 
-constructor TJsonModelBuilder.Create(AModel: TGeneratorModel; const AOptions: TGeneratorOptions);
+constructor TJsonModelBuilder.Create(AModel: TGeneratorModel);
 begin
   inherited Create;
   FModel := AModel;
-  FNaming := TDelphiNaming.Create(AOptions);
+  FLocations := TDictionary<string, TJsonSourceLocation>.Create;
 end;
 
 destructor TJsonModelBuilder.Destroy;
 begin
-  FNaming.Free;
+  FLocations.Free;
   inherited;
 end;
 
-function TJsonModelBuilder.AddClass(AParent: TGeneratorClass; const AJsonName: string; ANeedsSourceCode: Boolean): TGeneratorClass;
+function TJsonModelBuilder.AddClass(AParent: TGeneratorClass;
+  const AJsonName, AJsonPath: string): TGeneratorClass;
 begin
-  { Classes with the same JSON property name share one generated class.
-    For example, customer.address and supplier.address both use TAddress.
-    The lookup is limited to the model currently being generated. }
+  { Keep legacy class reuse by JSON property name. Identity is deliberately
+    stored separately from any language-specific generated class name. }
   Result := FModel.FindClass(AJsonName);
   if Result <> nil then
     Exit;
   Result := TGeneratorClass.Create;
   Result.Parent := AParent;
   Result.JsonName := AJsonName;
-  Result.Name := FNaming.ClassName(AJsonName);
-  Result.NeedsSourceCode := ANeedsSourceCode;
+  Result.JsonPath := AJsonPath;
+  Result.Identity := AJsonPath;
   FModel.Classes.Add(Result);
 end;
 
-function TJsonModelBuilder.AddField(AClass: TGeneratorClass; const AJsonName: string; AKind: TGeneratorFieldKind; AValueType: TJsonType): TGeneratorField;
+function TJsonModelBuilder.AddField(AClass: TGeneratorClass;
+  const AJsonName, AJsonPath: string): TGeneratorField;
+var
+  Location: TJsonSourceLocation;
 begin
   Result := AClass.FindField(AJsonName);
   if Result <> nil then
     Exit;
   Result := TGeneratorField.Create;
   Result.JsonName := AJsonName;
-  Result.DelphiName := FNaming.Identifier(AJsonName);
-  Result.NeedsJsonNameAttribute := FNaming.NeedsJsonNameAttribute(AJsonName, Result.DelphiName);
-  Result.Kind := AKind;
-  Result.ValueType := AValueType;
+  Result.JsonPath := AJsonPath;
+  if FLocations.TryGetValue(AJsonPath, Location) then
+  begin
+    Result.SourcePosition := Location.Position;
+    Result.SourceLength := Location.Length;
+  end;
   AClass.Fields.Add(Result);
 end;
 
-function TJsonModelBuilder.ArrayItemType(AArray: TJSONArray): TJsonType;
+function TJsonModelBuilder.ArrayType(AArray: TJSONArray;
+  AParent: TGeneratorClass; const AJsonName,
+  AJsonPath: string): TGeneratorType;
 var
-  Item: TJSONValue;
+  Element: TJSONValue;
+  ElementClass: TGeneratorClass;
+  ElementType: TGeneratorType;
 begin
-  Result := jtUnknown;
-  for Item in AArray do
+  Result := TGeneratorType.Create(jvkArray);
+  for Element in AArray do
   begin
-    Result := TJsonValueHelper.GetJsonType(Item);
-    if Result <> jtUnknown then
-      Exit;
-  end;
-end;
+    if Element is TJSONNull then
+      Continue;
 
-function TJsonModelBuilder.NestedArrayItemType(
-  AArray: TJSONArray): TJsonType;
-var
-  Item: TJSONValue;
-begin
-  Result := jtUnknown;
-  for Item in AArray do
-    if Item is TJSONArray then
+    if Element is TJSONArray then
+      ElementType := ArrayType(TJSONArray(Element), AParent, AJsonName,
+        AJsonPath + '[]')
+    else if Element is TJSONObject then
     begin
-      Result := ArrayItemType(TJSONArray(Item));
-      if Result <> jtUnknown then
-        Exit;
+      ElementClass := AddClass(AParent, AJsonName, AJsonPath + '[]');
+      ElementType := TGeneratorType.Create(jvkObject, svkObject);
+      ElementType.ObjectClass := ElementClass;
+      ProcessObject(TJSONObject(Element), ElementClass, AJsonPath + '[]');
+    end
+    else
+      ElementType := ScalarType(Element);
+
+    if Result.ElementType = nil then
+      Result.ElementType := ElementType
+    else
+    begin
+      if (Result.ElementType.SemanticKind = svkInteger) and
+         (ElementType.SemanticKind in [svkInteger64, svkFloat]) then
+        Result.ElementType.SemanticKind := ElementType.SemanticKind
+      else if (Result.ElementType.SemanticKind = svkInteger64) and
+              (ElementType.SemanticKind = svkFloat) then
+        Result.ElementType.SemanticKind := svkFloat;
+      ElementType.Free;
     end;
+  end;
+
+  if Result.ElementType = nil then
+    Result.ElementType := TGeneratorType.Create(jvkUnknown, svkUnknown);
+
+  if Result.ArrayDepth > 2 then
+    raise EJsonGenerator.CreateFmt(
+      'Arrays with more than two dimensions are not supported: %s',
+      [AJsonName]);
+  if (Result.ArrayDepth = 2) and
+     (Result.LeafType.SemanticKind = svkObject) then
+    raise EJsonGenerator.CreateFmt(
+      'Two-dimensional object arrays are not supported: %s', [AJsonName]);
+
+  if Result.ElementType.SemanticKind = svkObject then
+  begin
+    ElementClass := Result.ElementType.ObjectClass;
+    for Element in AArray do
+      if Element is TJSONObject then
+        ProcessObject(TJSONObject(Element), ElementClass, AJsonPath + '[]');
+    MarkOptionalFields(AArray, ElementClass);
+  end;
 end;
 
 procedure TJsonModelBuilder.Build(const AJson, ARootClassName: string);
 var
-  JsonValue: TJSONValue;
-  Item: TJSONValue;
-  ItemClass: TGeneratorClass;
-  ItemType: TJsonType;
   GeneratorClass: TGeneratorClass;
+  JsonValue: TJSONValue;
   RootField: TGeneratorField;
 begin
   if AJson.Trim = '' then
     raise EJsonGenerator.Create('JSON must be provided');
-
   if ARootClassName.Trim = '' then
     raise EJsonGenerator.Create('Root class name must be provided');
 
   JsonValue := TJSONObject.ParseJSONValue(AJson);
   if JsonValue = nil then
     raise EJsonGenerator.Create('Unable to parse the JSON string');
-
   try
-    TJsonSourceValidator.ValidateArrayTypes(AJson);
+    TJsonSourceValidator.ValidateArrayTypes(AJson, FLocations);
     FModel.Clear;
-    FModel.RootClass := AddClass(nil, ARootClassName);
-    case TJsonValueHelper.GetJsonType(JsonValue) of
-      jtObject:
-        ProcessObject(TJSONObject(JsonValue), FModel.RootClass);
-      jtArray:
-        begin
-          FModel.RootClass.ArrayProperty := 'Items';
-          ItemType := ArrayItemType(TJSONArray(JsonValue));
-          ItemClass := AddClass(FModel.RootClass, 'Items', ItemType = jtObject);
-          RootField := AddField(FModel.RootClass, 'Items', gfArray, jtArray);
-          RootField.ContainedType := ItemType;
-          RootField.FieldClass := ItemClass;
-
-          if ItemType = jtArray then
-          begin
-            RootField.ArrayDepth := 2;
-            RootField.ContainedType := NestedArrayItemType(
-              TJSONArray(JsonValue));
-            if RootField.ContainedType = jtArray then
-              raise EJsonGenerator.Create(
-                'Arrays with more than two dimensions are not supported');
-            if RootField.ContainedType = jtObject then
-              raise EJsonGenerator.Create(
-                'Two-dimensional object arrays are not supported');
-          end;
-
-          if ItemType = jtObject then
-            for Item in TJSONArray(JsonValue) do
-              if Item is TJSONObject then
-                ProcessObject(TJSONObject(Item), ItemClass);
-        end;
+    FModel.RootClass := AddClass(nil, ARootClassName, '$');
+    if JsonValue is TJSONObject then
+      ProcessObject(TJSONObject(JsonValue), FModel.RootClass, '$')
+    else if JsonValue is TJSONArray then
+    begin
+      RootField := AddField(FModel.RootClass, 'Items', '$');
+      RootField.DataType := ArrayType(TJSONArray(JsonValue),
+        FModel.RootClass, 'Items', '$');
+    end
     else
       raise EJsonGenerator.Create('The JSON root must be an object or array');
-    end;
 
     for GeneratorClass in FModel.Classes do
       GeneratorClass.SortFields;
@@ -165,60 +183,88 @@ begin
   end;
 end;
 
-procedure TJsonModelBuilder.ProcessObject(AObject: TJSONObject; AClass: TGeneratorClass);
+procedure TJsonModelBuilder.MarkOptionalFields(AArray: TJSONArray;
+  AClass: TGeneratorClass);
 var
-  Pair: TJSONPair;
+  Element: TJSONValue;
+  Field: TGeneratorField;
 begin
-  for Pair in AObject do
-    ProcessValue(Pair.JsonString.Value, Pair.JsonValue, AClass);
+  for Field in AClass.Fields do
+    for Element in AArray do
+      if (Element is TJSONObject) and
+         (TJSONObject(Element).GetValue(Field.JsonName) = nil) then
+      begin
+        Field.IsOptional := True;
+        Break;
+      end;
 end;
 
-procedure TJsonModelBuilder.ProcessValue(const AJsonName: string; AValue: TJSONValue; AClass: TGeneratorClass);
+procedure TJsonModelBuilder.ProcessObject(AObject: TJSONObject;
+  AClass: TGeneratorClass; const AJsonPath: string);
 var
-  ArrayValue: TJSONArray;
+  Pair: TJSONPair;
+  Path: string;
+begin
+  for Pair in AObject do
+  begin
+    if AJsonPath = '$' then
+      Path := '$.' + Pair.JsonString.Value
+    else
+      Path := AJsonPath + '.' + Pair.JsonString.Value;
+    ProcessValue(Pair.JsonString.Value, Path, Pair.JsonValue, AClass);
+  end;
+end;
+
+procedure TJsonModelBuilder.ProcessValue(const AJsonName,
+  AJsonPath: string; AValue: TJSONValue; AClass: TGeneratorClass);
+var
   Field: TGeneratorField;
   FieldClass: TGeneratorClass;
-  Item: TJSONValue;
-  ItemType: TJsonType;
+begin
+  Field := AddField(AClass, AJsonName, AJsonPath);
+  if Field.DataType <> nil then
+  begin
+    if AValue is TJSONNull then
+      Field.DataType.Nullable := True;
+    Exit;
+  end;
+
+  if AValue is TJSONObject then
+  begin
+    FieldClass := AddClass(AClass, AJsonName, AJsonPath);
+    Field.DataType := TGeneratorType.Create(jvkObject, svkObject);
+    Field.DataType.ObjectClass := FieldClass;
+    ProcessObject(TJSONObject(AValue), FieldClass, AJsonPath);
+  end
+  else if AValue is TJSONArray then
+    Field.DataType := ArrayType(TJSONArray(AValue), AClass, AJsonName,
+      AJsonPath)
+  else
+    Field.DataType := ScalarType(AValue);
+end;
+
+function TJsonModelBuilder.ScalarType(AValue: TJSONValue): TGeneratorType;
 begin
   case TJsonValueHelper.GetJsonType(AValue) of
-    jtObject:
-      begin
-        FieldClass := AddClass(AClass, AJsonName);
-        Field := AddField(AClass, AJsonName, gfObject, jtObject);
-        Field.FieldClass := FieldClass;
-        ProcessObject(TJSONObject(AValue), FieldClass);
-      end;
-    jtArray:
-      begin
-        ArrayValue := TJSONArray(AValue);
-        ItemType := ArrayItemType(ArrayValue);
-        if ItemType = jtArray then
-        begin
-          Field := AddField(AClass, AJsonName, gfArray, jtArray);
-          Field.ArrayDepth := 2;
-          Field.ContainedType := NestedArrayItemType(ArrayValue);
-          if Field.ContainedType = jtArray then
-            raise EJsonGenerator.CreateFmt(
-              'Arrays with more than two dimensions are not supported: %s',
-              [AJsonName]);
-          if Field.ContainedType = jtObject then
-            raise EJsonGenerator.CreateFmt(
-              'Two-dimensional object arrays are not supported: %s',
-              [AJsonName]);
-          Exit;
-        end;
-        FieldClass := AddClass(AClass, AJsonName, ItemType = jtObject);
-        Field := AddField(AClass, AJsonName, gfArray, jtArray);
-        Field.ContainedType := ItemType;
-        Field.FieldClass := FieldClass;
-        if ItemType = jtObject then
-          for Item in ArrayValue do
-            if Item is TJSONObject then
-              ProcessObject(TJSONObject(Item), FieldClass);
-      end;
+    jtObject: Result := TGeneratorType.Create(jvkObject, svkObject);
+    jtArray: Result := TGeneratorType.Create(jvkArray);
+    jtString: Result := TGeneratorType.Create(jvkString, svkString);
+    jtTrue, jtFalse: Result := TGeneratorType.Create(jvkBoolean, svkBoolean);
+    jtNumber: Result := TGeneratorType.Create(jvkNumber, svkFloat);
+    jtDateTime: Result := TGeneratorType.Create(jvkString, svkDateTime);
+    jtBytes: Result := TGeneratorType.Create(jvkString, svkBytes);
+    jtInteger: Result := TGeneratorType.Create(jvkNumber, svkInteger);
+    jtInteger64: Result := TGeneratorType.Create(jvkNumber, svkInteger64);
   else
-    AddField(AClass, AJsonName, gfScalar, TJsonValueHelper.GetJsonType(AValue));
+    begin
+      if AValue is TJSONNull then
+      begin
+        Result := TGeneratorType.Create(jvkNull, svkUnknown);
+        Result.Nullable := True;
+      end
+      else
+        Result := TGeneratorType.Create(jvkUnknown, svkUnknown);
+    end;
   end;
 end;
 

@@ -56,7 +56,7 @@ begin
           OutputDirectory := IncludeTrailingPathDelimiter(OutputDirectory) +
             DestinationClassName + TPath.DirectorySeparatorChar;
           TDemoProjectGenerator.Generate(OutputDirectory,
-            Generator.DestinationUnitName, Generator.Model.RootClass.Name,
+            Generator.DestinationUnitName, Generator.GeneratedRootClassName,
             Generator.Json, Generator.GenerateUnit, dpfVCL);
         finally
           Generator.Free;

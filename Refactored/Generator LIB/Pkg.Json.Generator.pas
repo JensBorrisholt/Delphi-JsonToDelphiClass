@@ -17,6 +17,7 @@ type
     constructor Create(const AOptions: TGeneratorOptions); overload;
     constructor Create; overload;
     destructor Destroy; override;
+    function GeneratedRootClassName: string;
     function GenerateUnit: string;
     function IsValid(const AJson: string): Boolean;
     function Parse(const AJson: string): TJsonToDelphiGenerator;
@@ -67,6 +68,20 @@ begin
   end;
 end;
 
+function TJsonToDelphiGenerator.GeneratedRootClassName: string;
+var
+  Writer: TDelphiUnitWriter;
+begin
+  if FModel.RootClass = nil then
+    raise Exception.Create('No model has been built');
+  Writer := TDelphiUnitWriter.Create(FOptions);
+  try
+    Result := Writer.GeneratedClassName(FModel, FModel.RootClass);
+  finally
+    Writer.Free;
+  end;
+end;
+
 function TJsonToDelphiGenerator.IsValid(const AJson: string): Boolean;
 var
   Value: TJSONValue;
@@ -80,7 +95,7 @@ function TJsonToDelphiGenerator.Parse(const AJson: string): TJsonToDelphiGenerat
 var
   Builder: TJsonModelBuilder;
 begin
-  Builder := TJsonModelBuilder.Create(FModel, FOptions);
+  Builder := TJsonModelBuilder.Create(FModel);
   try
     Builder.Build(AJson, FRootClassName);
     FJson := AJson;

@@ -183,6 +183,48 @@ begin
   end;
 end;
 
+procedure TestLanguageIndependentModel;
+var
+  Generator: TJsonToDelphiGenerator;
+  MatrixField: TGeneratorField;
+  MaybeField: TGeneratorField;
+  RowsClass: TGeneratorClass;
+begin
+  Generator := TJsonToDelphiGenerator.Create(DefaultOptions);
+  try
+    Generator.Parse('{"enabled":true,' +
+      '"created":"2025-01-02T03:04:05Z","maybe":null,' +
+      '"matrix":[[1,2],[3,4]],"rows":[{"a":1},{"b":2}]}');
+    Check(Generator.Model.RootClass.FindField('enabled').DataType.JsonKind =
+      jvkBoolean, 'Boolean values must have one neutral JSON kind');
+    Check(Generator.Model.RootClass.FindField('created').DataType.JsonKind =
+      jvkString, 'Date-time values must retain their JSON string kind');
+    Check(Generator.Model.RootClass.FindField('created').DataType.SemanticKind =
+      svkDateTime, 'Date-time interpretation must be stored separately');
+    MaybeField := Generator.Model.RootClass.FindField('maybe');
+    Check(MaybeField.DataType.Nullable,
+      'JSON null must be represented explicitly in the model');
+    Check(MaybeField.JsonPath = '$.maybe',
+      'Fields must retain their JSON source path');
+    Check((MaybeField.SourcePosition >= 0) and
+      (MaybeField.SourceLength = Length('null')),
+      'Fields must retain their JSON source range');
+    MatrixField := Generator.Model.RootClass.FindField('matrix');
+    Check(MatrixField.DataType.ArrayDepth = 2,
+      'Array dimensions must be represented recursively');
+    Check(MatrixField.DataType.ElementType.ElementType.SemanticKind =
+      svkInteger, 'The recursive array leaf type must be neutral');
+    RowsClass := Generator.Model.FindClass('rows');
+    Check((RowsClass <> nil) and (RowsClass.Identity = '$.rows[]'),
+      'Class identity must be independent of a generated language name');
+    Check(RowsClass.FindField('a').IsOptional and
+      RowsClass.FindField('b').IsOptional,
+      'Missing object members must be represented as optional');
+  finally
+    Generator.Free;
+  end;
+end;
+
 begin
   try
     TestObjectGeneration;
@@ -190,6 +232,7 @@ begin
     TestEmptyArray;
     TestTwoDimensionalArray;
     TestTwoDimensionalArrayRuntime;
+    TestLanguageIndependentModel;
     TestArrayTypeConflictLocation;
     Writeln('All generator smoke tests passed.');
   except

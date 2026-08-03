@@ -20,8 +20,7 @@ type
 implementation
 
 uses
-  System.SysUtils,
-  Pkg.Json.JsonValueHelper;
+  System.SysUtils;
 
 class procedure TJsonModelVisualizer.AddClass(const ATree: TTreeView;
   const AParent: TTreeNode; const AClass: TGeneratorClass;
@@ -36,44 +35,43 @@ begin
   begin
     Node := ATree.Items.AddChild(AParent,
       Format('%s: %s', [Field.JsonName, FieldTypeName(Field)]));
-    if (Field.Kind in [gfObject, gfArray]) and
-       (Field.FieldClass <> nil) and
-       ((Field.Kind = gfObject) or (Field.ContainedType = jtObject)) then
-      AddClass(ATree, Node, Field.FieldClass, ADepth + 1);
+    if (Field.DataType <> nil) and
+       (Field.DataType.LeafType <> nil) and
+       (Field.DataType.LeafType.SemanticKind = svkObject) then
+      AddClass(ATree, Node, Field.DataType.LeafType.ObjectClass,
+        ADepth + 1);
   end;
 end;
 
 class function TJsonModelVisualizer.FieldTypeName(
   const AField: TGeneratorField): string;
 
-  function JsonTypeName(const AType: TJsonType): string;
+  function SemanticTypeName(const AType: TGeneratorType): string;
   begin
-    case AType of
-      jtObject: Result := 'object';
-      jtArray: Result := 'array';
-      jtString: Result := 'string';
-      jtTrue, jtFalse: Result := 'Boolean';
-      jtNumber: Result := 'Double';
-      jtDateTime: Result := 'TDateTime';
-      jtBytes: Result := 'Byte';
-      jtInteger: Result := 'Integer';
-      jtInteger64: Result := 'Int64';
+    if AType = nil then
+      Exit('unknown');
+    if AType.JsonKind = jvkArray then
+      Exit('array<' + SemanticTypeName(AType.ElementType) + '>');
+    case AType.SemanticKind of
+      svkObject: Result := 'object';
+      svkString: Result := 'string';
+      svkBoolean: Result := 'boolean';
+      svkInteger: Result := 'integer';
+      svkInteger64: Result := 'integer64';
+      svkFloat: Result := 'number';
+      svkDateTime: Result := 'date-time';
+      svkBytes: Result := 'byte';
     else
       Result := 'unknown';
     end;
   end;
 
 begin
-  case AField.Kind of
-    gfObject: Result := AField.FieldClass.Name;
-    gfArray:
-      if AField.ContainedType = jtObject then
-        Result := 'TObjectList<' + AField.FieldClass.Name + '>'
-      else
-        Result := 'TList<' + JsonTypeName(AField.ContainedType) + '>';
-  else
-    Result := JsonTypeName(AField.ValueType);
-  end;
+  Result := SemanticTypeName(AField.DataType);
+  if AField.IsOptional then
+    Result := Result + ' (optional)';
+  if (AField.DataType <> nil) and AField.DataType.Nullable then
+    Result := Result + ' (nullable)';
 end;
 
 class procedure TJsonModelVisualizer.Visualize(const ATree: TTreeView;
@@ -86,7 +84,7 @@ begin
     ATree.Items.Clear;
     if (AModel = nil) or (AModel.RootClass = nil) then
       Exit;
-    Root := ATree.Items.Add(nil, AModel.RootClass.Name);
+    Root := ATree.Items.Add(nil, AModel.RootClass.JsonName);
     AddClass(ATree, Root, AModel.RootClass, 0);
     Root.Expand(False);
   finally

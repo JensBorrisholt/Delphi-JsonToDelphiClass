@@ -3,54 +3,73 @@ unit Pkg.Json.Generator.Model;
 interface
 
 uses
-  System.Generics.Collections,
-  Pkg.Json.JsonValueHelper;
+  System.Generics.Collections;
 
 type
   TGeneratorClass = class;
 
-  TGeneratorFieldKind = (gfScalar, gfObject, gfArray);
+  TJsonValueKind = (jvkUnknown, jvkNull, jvkObject, jvkArray, jvkString,
+    jvkBoolean, jvkNumber);
+
+  TSemanticValueKind = (svkUnknown, svkObject, svkString, svkBoolean,
+    svkInteger, svkInteger64, svkFloat, svkDateTime, svkBytes);
+
+  TGeneratorType = class
+  private
+    FElementType: TGeneratorType;
+    FJsonKind: TJsonValueKind;
+    FNullable: Boolean;
+    FObjectClass: TGeneratorClass;
+    FSemanticKind: TSemanticValueKind;
+  public
+    constructor Create(AJsonKind: TJsonValueKind;
+      ASemanticKind: TSemanticValueKind = svkUnknown);
+    destructor Destroy; override;
+    function ArrayDepth: Integer;
+    function LeafType: TGeneratorType;
+    property ElementType: TGeneratorType read FElementType write FElementType;
+    property JsonKind: TJsonValueKind read FJsonKind write FJsonKind;
+    property Nullable: Boolean read FNullable write FNullable;
+    property ObjectClass: TGeneratorClass read FObjectClass write FObjectClass;
+    property SemanticKind: TSemanticValueKind read FSemanticKind
+      write FSemanticKind;
+  end;
 
   TGeneratorField = class
   private
-    FArrayDepth: Integer;
-    FContainedType: TJsonType;
-    FDelphiName: string;
-    FFieldClass: TGeneratorClass;
+    FDataType: TGeneratorType;
+    FIsOptional: Boolean;
     FJsonName: string;
-    FKind: TGeneratorFieldKind;
-    FNeedsJsonNameAttribute: Boolean;
-    FValueType: TJsonType;
+    FJsonPath: string;
+    FSourceLength: Integer;
+    FSourcePosition: Integer;
   public
     constructor Create;
-    property ArrayDepth: Integer read FArrayDepth write FArrayDepth;
-    property ContainedType: TJsonType read FContainedType write FContainedType;
-    property DelphiName: string read FDelphiName write FDelphiName;
-    property FieldClass: TGeneratorClass read FFieldClass write FFieldClass;
+    destructor Destroy; override;
+    property DataType: TGeneratorType read FDataType write FDataType;
+    property IsOptional: Boolean read FIsOptional write FIsOptional;
     property JsonName: string read FJsonName write FJsonName;
-    property Kind: TGeneratorFieldKind read FKind write FKind;
-    property NeedsJsonNameAttribute: Boolean read FNeedsJsonNameAttribute write FNeedsJsonNameAttribute;
-    property ValueType: TJsonType read FValueType write FValueType;
+    property JsonPath: string read FJsonPath write FJsonPath;
+    property SourceLength: Integer read FSourceLength write FSourceLength;
+    property SourcePosition: Integer read FSourcePosition write FSourcePosition;
   end;
 
   TGeneratorClass = class
   private
-    FArrayProperty: string;
     FFields: TObjectList<TGeneratorField>;
+    FIdentity: string;
     FJsonName: string;
-    FName: string;
-    FNeedsSourceCode: Boolean;
+    FJsonPath: string;
     FParent: TGeneratorClass;
   public
     constructor Create;
     destructor Destroy; override;
     function FindField(const AJsonName: string): TGeneratorField;
     procedure SortFields;
-    property ArrayProperty: string read FArrayProperty write FArrayProperty;
     property Fields: TObjectList<TGeneratorField> read FFields;
+    property Identity: string read FIdentity write FIdentity;
     property JsonName: string read FJsonName write FJsonName;
-    property Name: string read FName write FName;
-    property NeedsSourceCode: Boolean read FNeedsSourceCode write FNeedsSourceCode;
+    property JsonPath: string read FJsonPath write FJsonPath;
     property Parent: TGeneratorClass read FParent write FParent;
   end;
 
@@ -72,17 +91,56 @@ implementation
 uses
   System.Generics.Defaults, System.SysUtils;
 
+constructor TGeneratorType.Create(AJsonKind: TJsonValueKind;
+  ASemanticKind: TSemanticValueKind);
+begin
+  inherited Create;
+  FJsonKind := AJsonKind;
+  FSemanticKind := ASemanticKind;
+end;
+
+destructor TGeneratorType.Destroy;
+begin
+  FElementType.Free;
+  inherited;
+end;
+
+function TGeneratorType.ArrayDepth: Integer;
+var
+  Current: TGeneratorType;
+begin
+  Result := 0;
+  Current := Self;
+  while (Current <> nil) and (Current.JsonKind = jvkArray) do
+  begin
+    Inc(Result);
+    Current := Current.ElementType;
+  end;
+end;
+
+function TGeneratorType.LeafType: TGeneratorType;
+begin
+  Result := Self;
+  while (Result <> nil) and (Result.JsonKind = jvkArray) do
+    Result := Result.ElementType;
+end;
+
 constructor TGeneratorField.Create;
 begin
   inherited;
-  FArrayDepth := 1;
+  FSourcePosition := -1;
+end;
+
+destructor TGeneratorField.Destroy;
+begin
+  FDataType.Free;
+  inherited;
 end;
 
 constructor TGeneratorClass.Create;
 begin
   inherited;
   FFields := TObjectList<TGeneratorField>.Create(True);
-  FNeedsSourceCode := True;
 end;
 
 destructor TGeneratorClass.Destroy;
@@ -104,7 +162,7 @@ begin
   FFields.Sort(TComparer<TGeneratorField>.Construct(
     function(const Left, Right: TGeneratorField): Integer
     begin
-      Result := CompareStr(Left.DelphiName, Right.DelphiName);
+      Result := CompareStr(Left.JsonName, Right.JsonName);
     end));
 end;
 

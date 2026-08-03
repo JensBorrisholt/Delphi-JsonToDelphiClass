@@ -147,7 +147,7 @@ begin
       if SelectDirectory('Select destination for the demo project', '',
         Destination) then
         TDemoProjectGenerator.Generate(Destination,
-          Trim(edtUnitName.Text), Generator.Model.RootClass.Name,
+          Trim(edtUnitName.Text), Generator.GeneratedRootClassName,
           memJson.Text, DelphiSource);
     end;
     if actDelphiUnit.Checked then FOutputPages.ActivePage := FDelphiTab

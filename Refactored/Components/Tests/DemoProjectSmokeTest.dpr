@@ -35,7 +35,8 @@ begin
       Generator.DestinationUnitName := 'RootU';
       Generator.Parse('{"name":"Ada","items":[{"id":1},{"id":2}]}');
       TDemoProjectGenerator.Generate(Destination, 'RootU',
-        Generator.Model.RootClass.Name, Generator.Json, Generator.GenerateUnit,
+        Generator.GeneratedRootClassName, Generator.Json,
+        Generator.GenerateUnit,
         dpfVCL);
     finally
       Generator.Free;

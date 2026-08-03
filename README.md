@@ -17,14 +17,25 @@ Delphi-JsonToDelphiClass
   * `TJsonSourceValidator` validates array shapes and element compatibility
     directly against the source text, retaining JSON paths and character
     ranges for useful error reporting.
-  * `TJsonModelBuilder` traverses the parsed JSON and builds an intermediate
-    model of classes, fields, relationships and array dimensions.
-  * `TDelphiNaming` owns identifier conversion, PascalCase handling, reserved
-    name decisions and generated class names.
+  * `TJsonModelBuilder` traverses the parsed JSON and builds a language-neutral
+    intermediate model of classes, fields, relationships and types. It does
+    not create Delphi identifiers or make Delphi output decisions.
+  * The type model is recursive. An array does not store a language-specific
+    element declaration or a separate dimension counter; it contains another
+    model type. A matrix is represented as `array -> array -> integer`.
+  * JSON representation and semantic interpretation are stored separately.
+    An ISO-8601 value is still recorded as a JSON string, while its semantic
+    type can be date-time. Likewise, `true` and `false` are represented by one
+    neutral boolean type rather than two generator-specific types.
+  * Model fields retain their JSON name, JSON path, optional state, nullable
+    state and source-location metadata. Model classes have a stable identity
+    which is independent of the name produced by any output language.
   * `TGeneratorOptions` captures the settings for one generation, preventing
     mutable GUI settings from leaking into an active run.
-  * `TDelphiUnitWriter` turns the completed model into Delphi source without
-    parsing JSON or making structural decisions.
+  * `TDelphiNaming` and `TDelphiUnitWriter` now form the Delphi-specific
+    backend. They create Delphi identifiers, escape reserved words, choose
+    `TList<T>`/`TObjectList<T>`, add Delphi attributes and emit the unit without
+    changing the neutral model.
 
   JSON is first validated and converted into a language-independent model;
   Delphi source is emitted only after that model is complete. All generation
@@ -34,6 +45,21 @@ Delphi-JsonToDelphiClass
   The GUI is now only a client of the generator instead of being part of its
   internal workflow. Type inference, validation and source emission can
   therefore be tested and evolved independently.
+
+  This intermediate model also prepares the generator for additional output
+  languages. A future C#, TypeScript, Kotlin or Swift backend can provide its
+  own naming rules and type mappings while consuming the same validated model:
+
+  ``text
+  JSON source -> validation -> neutral model
+                                  |-> Delphi writer
+                                  |-> C# writer
+                                  |-> TypeScript writer
+                                  |-> other language writers
+  ``
+
+  Only the Delphi backend is included today; the architecture now makes other
+  language backends an extension of the generator instead of another rewrite.
 * Added support for homogeneous two-dimensional arrays of scalar values.
   Lists remain the public Delphi API; dynamic arrays are used only as the
   internal bridge required by Delphi's JSON serializer.

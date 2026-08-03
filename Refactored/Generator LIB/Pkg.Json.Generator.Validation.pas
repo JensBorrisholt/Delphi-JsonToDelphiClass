@@ -2,10 +2,20 @@ unit Pkg.Json.Generator.Validation;
 
 interface
 
+uses
+  System.Generics.Collections;
+
 type
+  TJsonSourceLocation = record
+    Position: Integer;
+    Length: Integer;
+  end;
+
   TJsonSourceValidator = class
   public
-    class procedure ValidateArrayTypes(const AJson: string); static;
+    class procedure ValidateArrayTypes(const AJson: string); overload; static;
+    class procedure ValidateArrayTypes(const AJson: string;
+      ALocations: TDictionary<string, TJsonSourceLocation>); overload; static;
   end;
 
 implementation
@@ -19,6 +29,7 @@ type
   private
     FPosition: Integer;
     FSource: string;
+    FLocations: TDictionary<string, TJsonSourceLocation>;
     function DecodeString(const AStart, ALength: Integer): string;
     function MergeSignatures(const AExpected, AActual: string): string;
     function ParseArray(const APath: string; const AStart: Integer): string;
@@ -31,15 +42,18 @@ type
     procedure SkipWhitespace;
     function TypeName(const AType: TJsonType): string;
   public
-    constructor Create(const ASource: string);
+    constructor Create(const ASource: string;
+      ALocations: TDictionary<string, TJsonSourceLocation>);
     procedure Validate;
   end;
 
-constructor TJsonSourceParser.Create(const ASource: string);
+constructor TJsonSourceParser.Create(const ASource: string;
+  ALocations: TDictionary<string, TJsonSourceLocation>);
 begin
   inherited Create;
   FSource := ASource;
   FPosition := 1;
+  FLocations := ALocations;
 end;
 
 function TJsonSourceParser.DecodeString(const AStart, ALength: Integer): string;
@@ -180,6 +194,7 @@ end;
 function TJsonSourceParser.ParseValue(const APath: string; out AStart,
   ALength: Integer): string;
 var
+  Location: TJsonSourceLocation;
   Value: TJSONValue;
 begin
   SkipWhitespace;
@@ -208,6 +223,12 @@ begin
     Result := ParseScalar(AStart);
   end;
   ALength := FPosition - AStart;
+  if FLocations <> nil then
+  begin
+    Location.Position := AStart - 1;
+    Location.Length := ALength;
+    FLocations.AddOrSetValue(APath, Location);
+  end;
 end;
 
 procedure TJsonSourceParser.RaiseTypeConflict(const APath, AExpected,
@@ -262,10 +283,18 @@ begin
 end;
 
 class procedure TJsonSourceValidator.ValidateArrayTypes(const AJson: string);
+begin
+  ValidateArrayTypes(AJson, nil);
+end;
+
+class procedure TJsonSourceValidator.ValidateArrayTypes(const AJson: string;
+  ALocations: TDictionary<string, TJsonSourceLocation>);
 var
   Parser: TJsonSourceParser;
 begin
-  Parser := TJsonSourceParser.Create(AJson);
+  if ALocations <> nil then
+    ALocations.Clear;
+  Parser := TJsonSourceParser.Create(AJson, ALocations);
   try
     Parser.Validate;
   finally
