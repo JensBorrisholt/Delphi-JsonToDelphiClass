@@ -6,9 +6,8 @@ Delphi-JsonToDelphiClass
 ### Features ###
 
 * Added C# as a second generator backend.
-  The same validated, language-neutral model can now be passed through both
-  the Delphi and C# generators, allowing multiple source-language outputs
-  from the same JSON input.
+  The same validated, language-neutral model can now be used to generate
+  both Delphi and C# source code from the same JSON input.
   
 * C# generation produces a complete `.cs` source file rather than isolated
   class declarations. Output includes the required `using` directives,
