@@ -1,48 +1,65 @@
-﻿unit Pkg.Json.GeneratorGUI.SettingsForm;
+unit Pkg.Json.GeneratorGUI.SettingsForm;
 
 interface
 
 uses
-  System.SysUtils, System.Types, System.Rtti, System.UITypes, System.Classes, System.Variants, System.Bindings.Outputs,
-
-  FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.StdCtrls, FMX.Controls.Presentation, FMX.Edit, FMX.Bind.Editors,
-
-  Data.Bind.Components, Data.Bind.ObjectScope, Data.Bind.GenData, Data.Bind.EngExt, FMX.Bind.DBEngExt,
-
-  Pkg.Json.Settings;
+  System.Classes, System.SysUtils,
+  Vcl.Controls, Vcl.ExtCtrls, Vcl.Forms, Vcl.StdCtrls;
 
 type
   TSettingsForm = class(TForm)
-    chbAddJsonPropertyAttributes: TCheckBox;
-    Label1: TLabel;
-    chbUsePascalCase: TCheckBox;
-    btnOk: TButton;
-    chbPostfixClassNames: TCheckBox;
-    edPostFix: TEdit;
-    PrototypeBindSource1: TPrototypeBindSource;
-    BindingsList1: TBindingsList;
-    LinkControlToField1: TLinkControlToField;
-    LinkControlToField2: TLinkControlToField;
-    LinkControlToField3: TLinkControlToField;
-    LinkControlToField4: TLinkControlToField;
-    LinkPropertyToFieldEnabled: TLinkPropertyToField;
-    CheckBoxSuppressZeroDate: TCheckBox;
-    LinkControlToField5: TLinkControlToField;
-    procedure PrototypeBindSource1CreateAdapter(Sender: TObject; var ABindSourceAdapter: TBindSourceAdapter);
+    btnCancel: TButton;
+    btnOK: TButton;
+    chkAddAttributes: TCheckBox;
+    chkPostfixClassNames: TCheckBox;
+    chkSuppressZeroDate: TCheckBox;
+    chkUsePascalCase: TCheckBox;
+    edtPostfix: TEdit;
+    lblPostfix: TLabel;
+    pnlButtons: TPanel;
+    procedure chkPostfixClassNamesClick(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure btnOKClick(Sender: TObject);
   private
-    { Private declarations }
-  public
-    { Public declarations }
+    procedure UpdateControls;
   end;
 
 implementation
 
-{$R *.fmx}
+uses
+  Pkg.Json.Settings;
 
-procedure TSettingsForm.PrototypeBindSource1CreateAdapter(Sender: TObject; var ABindSourceAdapter: TBindSourceAdapter);
+{$R *.dfm}
+
+procedure TSettingsForm.btnOKClick(Sender: TObject);
 begin
-  ABindSourceAdapter := TObjectBindSourceAdapter<TSettings>.Create(Self, TSettings.Instance, false);
-  ABindSourceAdapter.AutoPost := True;
+  TSettings.Instance.AddJsonPropertyAttributes := chkAddAttributes.Checked;
+  TSettings.Instance.UsePascalCase := chkUsePascalCase.Checked;
+  TSettings.Instance.PostFixClassNames := chkPostfixClassNames.Checked;
+  TSettings.Instance.PostFix := Trim(edtPostfix.Text);
+  TSettings.Instance.SuppressZeroDate := chkSuppressZeroDate.Checked;
+  ModalResult := mrOK;
+end;
+
+procedure TSettingsForm.chkPostfixClassNamesClick(Sender: TObject);
+begin
+  UpdateControls;
+end;
+
+procedure TSettingsForm.FormShow(Sender: TObject);
+begin
+  chkAddAttributes.Checked := TSettings.Instance.AddJsonPropertyAttributes;
+  chkUsePascalCase.Checked := TSettings.Instance.UsePascalCase;
+  chkPostfixClassNames.Checked := TSettings.Instance.PostFixClassNames;
+  edtPostfix.Text := TSettings.Instance.PostFix;
+  chkSuppressZeroDate.Checked := TSettings.Instance.SuppressZeroDate;
+  UpdateControls;
+end;
+
+procedure TSettingsForm.UpdateControls;
+begin
+  lblPostfix.Enabled := chkPostfixClassNames.Checked;
+  edtPostfix.Enabled := chkPostfixClassNames.Checked;
 end;
 
 end.
