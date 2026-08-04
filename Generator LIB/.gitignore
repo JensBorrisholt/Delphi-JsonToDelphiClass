@@ -1,0 +1,10 @@
+/build/
+*.dcu
+*.dll
+*.exe
+*.map
+*.rsm
+*.drc
+*.identcache
+*.local
+*.delphilsp.json

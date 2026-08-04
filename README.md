@@ -1,6 +1,108 @@
 Delphi-JsonToDelphiClass
 ========================
 
+## Fixes & Features: 04th August 2026 ##
+
+### Features ###
+
+* The generator engine has been rebuilt from the ground up. This is not an
+  incremental cleanup of the previous implementation: the old monolithic,
+  stateful generation flow has been replaced by a compiler-style pipeline.
+  JSON traversal, validation, type inference, naming, class reuse and Delphi
+  source emission are no longer intertwined. Each stage now has an explicit
+  input, output and responsibility:
+
+  * `TJsonToDelphiGenerator` is the small public facade used by the GUI and
+    other clients.
+  * `TJsonSourceValidator` validates array shapes and element compatibility
+    directly against the source text, retaining JSON paths and character
+    ranges for useful error reporting.
+  * `TJsonModelBuilder` traverses the parsed JSON and builds a language-neutral
+    intermediate model of classes, fields, relationships and types. It does
+    not create Delphi identifiers or make Delphi output decisions.
+  * The type model is recursive. An array does not store a language-specific
+    element declaration or a separate dimension counter; it contains another
+    model type. A matrix is represented as `array -> array -> integer`.
+  * JSON representation and semantic interpretation are stored separately.
+    An ISO-8601 value is still recorded as a JSON string, while its semantic
+    type can be date-time. Likewise, `true` and `false` are represented by one
+    neutral boolean type rather than two generator-specific types.
+  * Model fields retain their JSON name, JSON path, optional state, nullable
+    state and source-location metadata. Model classes have a stable identity
+    which is independent of the name produced by any output language.
+  * `TGeneratorOptions` captures the settings for one generation, preventing
+    mutable GUI settings from leaking into an active run.
+  * `TDelphiNaming` and `TDelphiUnitWriter` now form the Delphi-specific
+    backend. They create Delphi identifiers, escape reserved words, choose
+    `TList<T>`/`TObjectList<T>`, add Delphi attributes and emit the unit without
+    changing the neutral model.
+
+  JSON is first validated and converted into a language-independent model;
+  Delphi source is emitted only after that model is complete. All generation
+  state belongs to a single generator instance and is cleared between parses.
+  Class reuse is scoped to the model currently being generated, and the
+  legacy naming and output rules are covered by dedicated compatibility tests.
+  The GUI is now only a client of the generator instead of being part of its
+  internal workflow. Type inference, validation and source emission can
+  therefore be tested and evolved independently.
+
+  This intermediate model also prepares the generator for additional output
+  languages. A future C#, TypeScript, Kotlin or Swift backend can provide its
+  own naming rules and type mappings while consuming the same validated model:
+
+  ``text
+  JSON source -> validation -> neutral model
+                                  |-> Delphi writer
+                                  |-> C# writer
+                                  |-> TypeScript writer
+                                  |-> other language writers
+  ``
+
+  Only the Delphi backend is included today; the architecture now makes other
+  language backends an extension of the generator instead of another rewrite.
+* Added support for homogeneous two-dimensional arrays of scalar values.
+  Lists remain the public Delphi API; dynamic arrays are used only as the
+  internal bridge required by Delphi's JSON serializer.
+
+For example, this JSON:
+
+```json
+{
+  "matrix": [
+    [1, 2],
+    [3, 4]
+  ]
+}
+```
+
+Generates a list-based property:
+
+```pascal
+property Matrix: TObjectList<TList<Integer>> read GetMatrix;
+```
+
+Rows must contain compatible values. A conflicting input such as
+`[[1, 2], ["3", "4"]]` reports the failing JSON path instead of silently
+choosing an incorrect Delphi type.
+
+* Added a completely new Generator GUI written in VCL. The previous
+  FireMonkey GUI has been replaced without removing the existing conversion
+  features.
+* Added rule-based syntax highlighting for both JSON input and generated
+  Delphi source.
+* Generator errors include the JSON path and source range. The corresponding
+  text is selected in the JSON editor when generation fails.
+* The refactored source tree is self-contained under `Refactored`; it does not
+  depend on project units from the legacy directory structure.
+
+### Fixes ###
+
+* Mixed array element types now produce a precise error containing the
+  expected type, actual type and JSON path.
+* Generic list serialization resolves the matching published property through
+  RTTI, avoiding the internal `TList<T>` implementation data that Delphi's
+  default serializer would otherwise emit.
+
 ## Fixes & Features: 16th June 2024 ##
 ### Features ###
 * JSON null property are now mapped to a string.
