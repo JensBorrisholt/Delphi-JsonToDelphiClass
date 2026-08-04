@@ -1,9 +1,6 @@
-﻿unit Pkg.Json.JSONName;
+unit Pkg.Json.JSONName;
 
 interface
-
-uses
-  Pkg.Json.Settings;
 
 {$M+}
 
@@ -15,7 +12,6 @@ type
     FNeedsAttribute: Boolean;
     FName: string;
     FPureClassName: string;
-    FSettings: TSettings;
   protected
     procedure SetName(const Value: string); virtual;
   published
@@ -76,12 +72,6 @@ begin
       List[i] := s;
     end;
 
-    if not TSettings.Instance.UsePascalCase then
-    begin
-      List.Delimiter := '_';
-      Exit(List.DelimitedText);
-    end;
-
     with TStringBuilder.Create do
       try
         for s in List do
@@ -103,7 +93,6 @@ var
   ch: Char;
 begin
   inherited Create;
-  FSettings := TSettings.Instance;
   if aItemName.IsEmpty then
     raise Exception.Create('aItemName can not be empty');
 
@@ -126,10 +115,7 @@ begin
   if not FDelphiName[1].IsLetter then
     FDelphiName := '_' + FDelphiName;
 
-  if TSettings.Instance.AddJsonPropertyAttributes then
-    FNeedsAttribute := True
-  else
-    FNeedsAttribute := not SameText(FDelphiName, FJsonName);
+  FNeedsAttribute := not SameText(FDelphiName, FJsonName);
 end;
 
 function TJSONName.NameAttribute: string;
@@ -140,7 +126,7 @@ end;
 procedure TJSONName.SetName(const Value: string);
 begin
   FPureClassName := Value;
-  FName := 'T' + FPureClassName + TSettings.GetPostFix;
+  FName := 'T' + FPureClassName;
 end;
 
 end.

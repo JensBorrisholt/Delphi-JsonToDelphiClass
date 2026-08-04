@@ -5,12 +5,11 @@ program LegacyCompatibilityTests;
 uses
   System.Classes, System.SysUtils,
   Pkg.Json.Mapper,
-  Pkg.Json.Generator in '..\Pkg.Json.Generator.pas',
-  Pkg.Json.Generator.Builder in '..\Pkg.Json.Generator.Builder.pas',
-  Pkg.Json.Generator.DelphiWriter in '..\Pkg.Json.Generator.DelphiWriter.pas',
-  Pkg.Json.Generator.Model in '..\Pkg.Json.Generator.Model.pas',
-  Pkg.Json.Generator.Naming in '..\Pkg.Json.Generator.Naming.pas',
-  Pkg.Json.Generator.Options in '..\Pkg.Json.Generator.Options.pas';
+  Pkg.Json.Generator.Delphi in '..\Delphi\Pkg.Json.Generator.Delphi.pas',
+  Pkg.Json.Generator.Builder in '..\Core\Pkg.Json.Generator.Builder.pas',
+  Pkg.Json.Generator.DelphiWriter in '..\Delphi\Pkg.Json.Generator.DelphiWriter.pas',
+  Pkg.Json.Generator.Model in '..\Core\Pkg.Json.Generator.Model.pas',
+  Pkg.Json.Generator.DelphiSettings in '..\Delphi\Pkg.Json.Generator.DelphiSettings.pas';
 
 function NormalizeWhitespace(const ASource: string): string;
 var

@@ -1,4 +1,4 @@
-﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{6BBCC9E7-79D5-46C7-86EA-AF36DE2AA5B9}</ProjectGuid>
         <MainSource>GeneratorSmokeTests.dpr</MainSource>
@@ -70,7 +70,7 @@
         <Icns_MainIcns>$(BDS)\bin\delphi_PROJECTICNS.icns</Icns_MainIcns>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_FrameworkPath>..\..\Lib;..\..\Generator LIB;$(DCC_FrameworkPath)</DCC_FrameworkPath>
-        <DCC_UnitSearchPath>..\..\Lib;..\..\Generator LIB;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>..\..\Lib;..\Core;..\Delphi;..\CSharp;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Android)'!=''">
@@ -157,13 +157,18 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="..\Pkg.Json.Generator.pas"/>
-        <DCCReference Include="..\Pkg.Json.Generator.Builder.pas"/>
-        <DCCReference Include="..\Pkg.Json.Generator.Errors.pas"/>
-        <DCCReference Include="..\Pkg.Json.Generator.DelphiWriter.pas"/>
-        <DCCReference Include="..\Pkg.Json.Generator.Model.pas"/>
-        <DCCReference Include="..\Pkg.Json.Generator.Naming.pas"/>
-        <DCCReference Include="..\Pkg.Json.Generator.Options.pas"/>
+        <DCCReference Include="..\Delphi\Pkg.Json.Generator.Delphi.pas"/>
+        <DCCReference Include="..\Core\Pkg.Json.Generator.Builder.pas"/>
+        <DCCReference Include="..\Core\Pkg.Json.Generator.Settings.pas"/>
+        <DCCReference Include="..\Core\Pkg.Json.Generator.Errors.pas"/>
+        <DCCReference Include="..\Delphi\Pkg.Json.Generator.DelphiWriter.pas"/>
+        <DCCReference Include="..\Delphi\Pkg.Json.Generator.DelphiNaming.pas"/>
+        <DCCReference Include="..\Delphi\Pkg.Json.Generator.DelphiSettings.pas"/>
+        <DCCReference Include="..\CSharp\Pkg.Json.Generator.CSharp.pas"/>
+        <DCCReference Include="..\CSharp\Pkg.Json.Generator.CSharpNaming.pas"/>
+        <DCCReference Include="..\CSharp\Pkg.Json.Generator.CSharpSettings.pas"/>
+        <DCCReference Include="..\CSharp\Pkg.Json.Generator.CSharpWriter.pas"/>
+        <DCCReference Include="..\Core\Pkg.Json.Generator.Model.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

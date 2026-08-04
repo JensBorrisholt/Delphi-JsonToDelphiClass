@@ -4,16 +4,19 @@ program GeneratorSmokeTests;
 
 uses
   System.SysUtils,
+  System.IOUtils,
   System.Generics.Collections,
   REST.Json.Types,
   Pkg.Json.DTO,
-  Pkg.Json.Generator in '..\Pkg.Json.Generator.pas',
-  Pkg.Json.Generator.Builder in '..\Pkg.Json.Generator.Builder.pas',
-  Pkg.Json.Generator.Errors in '..\Pkg.Json.Generator.Errors.pas',
-  Pkg.Json.Generator.DelphiWriter in '..\Pkg.Json.Generator.DelphiWriter.pas',
-  Pkg.Json.Generator.Model in '..\Pkg.Json.Generator.Model.pas',
-  Pkg.Json.Generator.Naming in '..\Pkg.Json.Generator.Naming.pas',
-  Pkg.Json.Generator.Options in '..\Pkg.Json.Generator.Options.pas';
+  Pkg.Json.Generator.Settings in '..\Core\Pkg.Json.Generator.Settings.pas',
+  Pkg.Json.Generator.Delphi in '..\Delphi\Pkg.Json.Generator.Delphi.pas',
+  Pkg.Json.Generator.Builder in '..\Core\Pkg.Json.Generator.Builder.pas',
+  Pkg.Json.Generator.Errors in '..\Core\Pkg.Json.Generator.Errors.pas',
+  Pkg.Json.Generator.DelphiWriter in '..\Delphi\Pkg.Json.Generator.DelphiWriter.pas',
+  Pkg.Json.Generator.DelphiSettings in '..\Delphi\Pkg.Json.Generator.DelphiSettings.pas',
+  Pkg.Json.Generator.Model in '..\Core\Pkg.Json.Generator.Model.pas',
+  Pkg.Json.Generator.CSharp in '..\CSharp\Pkg.Json.Generator.CSharp.pas',
+  Pkg.Json.Generator.CSharpSettings in '..\CSharp\Pkg.Json.Generator.CSharpSettings.pas';
 
 type
   TMatrixDTO = class(TJsonDTO)
@@ -53,21 +56,12 @@ begin
     raise Exception.Create(AMessage);
 end;
 
-function DefaultOptions: TGeneratorOptions;
-begin
-  Result.AddJsonPropertyAttributes := False;
-  Result.PostFixClassNames := False;
-  Result.PostFix := 'DTO';
-  Result.UsePascalCase := True;
-  Result.SuppressZeroDate := True;
-end;
-
 procedure TestObjectGeneration;
 var
   Generator: TJsonToDelphiGenerator;
   Source: string;
 begin
-  Generator := TJsonToDelphiGenerator.Create(DefaultOptions);
+  Generator := TJsonToDelphiGenerator.Create;
   try
     Generator.RootClassName := 'Order';
     Generator.DestinationUnitName := 'OrderDTO';
@@ -88,7 +82,7 @@ var
   Generator: TJsonToDelphiGenerator;
   Source: string;
 begin
-  Generator := TJsonToDelphiGenerator.Create(DefaultOptions);
+  Generator := TJsonToDelphiGenerator.Create;
   try
     Generator.Parse('[1,2,3]');
     Source := Generator.GenerateUnit;
@@ -103,7 +97,7 @@ var
   Generator: TJsonToDelphiGenerator;
   Source: string;
 begin
-  Generator := TJsonToDelphiGenerator.Create(DefaultOptions);
+  Generator := TJsonToDelphiGenerator.Create;
   try
     Generator.Parse('{"values":[]}');
     Source := Generator.GenerateUnit;
@@ -119,7 +113,7 @@ const
 var
   Generator: TJsonToDelphiGenerator;
 begin
-  Generator := TJsonToDelphiGenerator.Create(DefaultOptions);
+  Generator := TJsonToDelphiGenerator.Create;
   try
     try
       Generator.Parse(Json);
@@ -142,7 +136,7 @@ var
   Generator: TJsonToDelphiGenerator;
   Source: string;
 begin
-  Generator := TJsonToDelphiGenerator.Create(DefaultOptions);
+  Generator := TJsonToDelphiGenerator.Create;
   try
     Generator.Parse('[[1,2],[3,4]]');
     Source := Generator.GenerateUnit;
@@ -179,7 +173,7 @@ var
   MaybeField: TGeneratorField;
   RowsClass: TGeneratorClass;
 begin
-  Generator := TJsonToDelphiGenerator.Create(DefaultOptions);
+  Generator := TJsonToDelphiGenerator.Create;
   try
     Generator.Parse('{"enabled":true,' + '"created":"2025-01-02T03:04:05Z","maybe":null,' + '"matrix":[[1,2],[3,4]],"rows":[{"a":1},{"b":2}]}');
     Check(Generator.Model.RootClass.FindField('enabled').DataType.JsonKind = jvkBoolean, 'Boolean values must have one neutral JSON kind');
@@ -200,6 +194,88 @@ begin
   end;
 end;
 
+procedure TestCSharpGeneration;
+var
+  Generator: TJsonToCSharpGenerator;
+  Settings: TCSharpSettings;
+  Source: string;
+begin
+  Settings := TCSharpSettings.Create;
+  Settings.NamespaceName := 'Demo.Contracts';
+  Generator := TJsonToCSharpGenerator.Create(Settings);
+  try
+    Generator.RootClassName := 'Order';
+    Generator.Parse('{"id":1,"created_at":"2025-01-02T03:04:05Z",' +
+      '"customer":{"full-name":"Ada"},"lines":[{"sku":"A"},{"sku":"B"}],"maybe":null}');
+    Source := Generator.GenerateSource;
+    Check(Source.Contains('namespace Demo.Contracts;'), 'C# namespace missing');
+    Check(Source.Contains('public sealed class Order'), 'C# root class missing');
+    Check(Source.Contains('public int Id { get; set; }'), 'C# integer property missing');
+    Check(Source.Contains('public DateTimeOffset CreatedAt { get; set; }'), 'C# date-time property missing');
+    Check(Source.Contains('[JsonPropertyName("created_at")]'), 'C# renamed JSON property attribute missing');
+    Check(Source.Contains('public List<Lines> Lines { get; set; } = [];'), 'C# object list missing');
+    Check(Source.Contains('public object? Maybe { get; set; }'), 'C# nullable JSON null property missing');
+    Check(Source.Contains('[JsonPropertyName("full-name")]'), 'C# special JSON name attribute missing');
+  finally
+    Generator.Free;
+    Settings.Free;
+  end;
+end;
+
+procedure TestCSharpOptions;
+var
+  Generator: TJsonToCSharpGenerator;
+  Settings: TCSharpSettings;
+  Source: string;
+begin
+  Settings := TCSharpSettings.Create;
+  Settings.UseRecords := True;
+  Settings.UseNullableTypes := True;
+  Settings.UseReadonlyLists := True;
+  Generator := TJsonToCSharpGenerator.Create(Settings);
+  try
+    Generator.Parse('{"count":1,"values":[1,2]}');
+    Source := Generator.GenerateSource;
+    Check(Source.Contains('public sealed record Root'), 'C# record option missing');
+    Check(Source.Contains('public int? Count { get; init; }'), 'C# nullable primitive option missing');
+    Check(Source.Contains('public IReadOnlyList<int> Values { get; init; } = [];'), 'C# readonly list option missing');
+  finally
+    Generator.Free;
+    Settings.Free;
+  end;
+end;
+
+procedure TestSettingsSerialization;
+var
+  FileName: string;
+  SourceSettings: TDelphiSettings;
+  LoadedSettings: TDelphiSettings;
+begin
+  FileName := TPath.Combine(TPath.GetTempPath, 'json-generator-settings-test.json');
+  SourceSettings := TDelphiSettings.Create;
+  LoadedSettings := TDelphiSettings.Create;
+  try
+    SourceSettings.AddJsonPropertyAttributes := True;
+    SourceSettings.PostFixClassNames := True;
+    SourceSettings.PostFix := 'Model';
+    SourceSettings.UsePascalCase := False;
+    SourceSettings.SuppressZeroDate := False;
+    SourceSettings.Save(FileName);
+
+    LoadedSettings.Load(FileName);
+    Check(LoadedSettings.AddJsonPropertyAttributes, 'Settings Load/Save lost AddJsonPropertyAttributes');
+    Check(LoadedSettings.PostFixClassNames, 'Settings Load/Save lost PostFixClassNames');
+    Check(LoadedSettings.PostFix = 'Model', 'Settings Load/Save lost PostFix');
+    Check(not LoadedSettings.UsePascalCase, 'Settings Load/Save lost UsePascalCase');
+    Check(not LoadedSettings.SuppressZeroDate, 'Settings Load/Save lost SuppressZeroDate');
+  finally
+    LoadedSettings.Free;
+    SourceSettings.Free;
+    if TFile.Exists(FileName) then
+      TFile.Delete(FileName);
+  end;
+end;
+
 begin
   try
     TestObjectGeneration;
@@ -209,6 +285,9 @@ begin
     TestTwoDimensionalArrayRuntime;
     TestLanguageIndependentModel;
     TestArrayTypeConflictLocation;
+    TestCSharpGeneration;
+    TestCSharpOptions;
+    TestSettingsSerialization;
     Writeln('All generator smoke tests passed.');
     Readln;
   except

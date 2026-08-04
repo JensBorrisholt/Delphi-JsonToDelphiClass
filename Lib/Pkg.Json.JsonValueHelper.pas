@@ -1,4 +1,4 @@
-﻿unit Pkg.Json.JsonValueHelper;
+unit Pkg.Json.JsonValueHelper;
 
 interface
 

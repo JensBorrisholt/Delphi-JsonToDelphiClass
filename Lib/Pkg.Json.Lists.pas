@@ -1,4 +1,4 @@
-﻿unit Pkg.Json.Lists;
+unit Pkg.Json.Lists;
 
 interface
 

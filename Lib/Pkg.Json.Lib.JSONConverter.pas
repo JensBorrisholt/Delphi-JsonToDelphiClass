@@ -1,4 +1,4 @@
-﻿unit Pkg.Json.Lib.JSONConverter;
+unit Pkg.Json.Lib.JSONConverter;
 
 interface
 

@@ -1,4 +1,4 @@
-﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{77F297F4-A177-44FB-A215-7E6704FFC1A8}</ProjectGuid>
         <MainSource>JsonToDelphiClass.dpr</MainSource>
@@ -57,7 +57,7 @@
         <DCC_ImageBase>00400000</DCC_ImageBase>
         <SanitizedProjectName>JsonToDelphiClass</SanitizedProjectName>
         <DCC_Namespace>Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
-        <DCC_UnitSearchPath>Syntax;..\Components;..\Generator LIB;..\Lib;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>Syntax;..\Components;..\Generator LIB\Core;..\Generator LIB\Delphi;..\Generator LIB\CSharp;..\Lib;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=4.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=4.0.0.0;Comments=;CFBundleName=</VerInfo_Keys>
         <DCC_FrameworkPath>.\Syntax;..\Components;$(DCC_FrameworkPath)</DCC_FrameworkPath>
@@ -111,6 +111,7 @@
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="Syntax\Pkg.Json.Syntax.Incremental.pas"/>
+        <DCCReference Include="Syntax\Pkg.Json.Syntax.CSharp.pas"/>
         <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.Visualizer.pas"/>
         <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.DemoProject.pas"/>
         <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.UpdateForm.pas">

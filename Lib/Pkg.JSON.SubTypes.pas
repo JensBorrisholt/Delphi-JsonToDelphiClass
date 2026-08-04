@@ -1,4 +1,4 @@
-﻿unit Pkg.JSON.SubTypes;
+unit Pkg.JSON.SubTypes;
 
 interface
 

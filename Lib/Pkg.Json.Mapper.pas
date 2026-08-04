@@ -1,4 +1,4 @@
-﻿unit Pkg.Json.Mapper;
+unit Pkg.Json.Mapper;
 
 interface
 

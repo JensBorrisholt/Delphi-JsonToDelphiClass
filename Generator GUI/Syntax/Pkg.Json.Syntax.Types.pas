@@ -14,7 +14,7 @@ type
   TSyntaxLine = TArray<TSyntaxToken>;
   TSyntaxLines = TArray<TSyntaxLine>;
 
-  TSyntaxLanguage = (slJson, slDelphi);
+  TSyntaxLanguage = (slJson, slDelphi, slCSharp);
 
 implementation
 

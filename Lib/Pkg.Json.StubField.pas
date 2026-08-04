@@ -1,4 +1,4 @@
-﻿unit Pkg.Json.StubField;
+unit Pkg.Json.StubField;
 
 interface
 
@@ -109,7 +109,7 @@ implementation
 uses
   System.StrUtils, System.Classes,
 
-  Pkg.Json.ReservedWords, Pkg.Json.Settings;
+  Pkg.Json.ReservedWords;
 
 class procedure TStubClass.ClearNames;
 begin
@@ -479,10 +479,10 @@ end;
 
 function TStubField.DateAttribute: string;
 begin
-  if (not TSettings.Instance.SuppressZeroDate) or (FFieldType <> jtDateTime) then
-    exit('');
+  if FFieldType <> jtDateTime then
+    Exit('');
 
-  exit('SuppressZero');
+  Exit('SuppressZero');
 end;
 
 function TStubField.GetTypeAsString: string;

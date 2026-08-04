@@ -1,6 +1,58 @@
 Delphi-JsonToDelphiClass
 ========================
 
+## Fixes & Features: 05th August 2026 ##
+
+### Features ###
+
+* Added C# as a second generator backend.
+  The same validated, language-neutral model can now be passed through both
+  the Delphi and C# generators, allowing multiple source-language outputs
+  from the same JSON input.
+  
+* C# generation produces a complete `.cs` source file rather than isolated
+  class declarations. Output includes the required `using` directives,
+  `#nullable enable`, a file-scoped namespace and the generated types.
+
+* Added a dedicated C# backend:
+  * `TCSharpNaming` handles C# identifiers and reserved words.
+  * `TCSharpWriter` maps the neutral model to C# types and emits source code.
+  * `TCSharpSettings` contains C#-specific generator settings.
+
+* Added C# generator settings for namespace, records, init-only properties,
+  nullable value types, `JsonPropertyName` attributes and read-only list
+  interfaces.
+* Added C# syntax highlighting to the Generator GUI. The generated-code editor
+  now switches syntax highlighting according to the selected output language.
+* Reorganized the generator library into language-neutral and
+  language-specific parts:
+
+  ```text
+  Generator LIB
+  |-- Core
+  |-- Delphi
+  `-- CSharp
+  ```
+
+  `Core` contains the model builder, validation, errors and shared generator
+  infrastructure. Delphi and C# naming, settings and source writers are kept
+  in their respective language folders.
+
+* Added `TGeneratorSettings` as the common settings base class. It inherits
+  from `TJsonDTO` and provides shared `Load` and `Save` support through the
+  existing `AsJson` serialization mechanism. `TDelphiSettings` and
+  `TCSharpSettings` inherit from this base class while retaining only their
+  language-specific options.
+
+* Removed the legacy `Pkg.Json.Settings` generator settings implementation.
+  Generator settings are now owned by the individual output-language
+  backends.
+
+### Fixes ###
+
+* Normalized Delphi project source files to CRLF line endings for RAD Studio
+  compatibility.
+
 ## Fixes & Features: 04th August 2026 ##
 
 ### Features ###
@@ -335,15 +387,15 @@ Generates the following DTO:
 * Serialization removed the "noise" of List<T> i.e. includes internal properties that did not exist in the original JSON string.
 * Generated code uses TObjectList<T>
   
-Generates Delphi Classes based on JSON string. Just like XML Data Binding, but for JSON.
+Generates Delphi or C# classes from a JSON string. Just like XML Data Binding, but for JSON.
 
 ## Main features ##
 
 - Build entirely on the RTL (no external dependencies) so it's cross-platform;
 - Accepts any valid JSON string, no matter how complex the object is;
 - Visualizes the structure of the JSON objects in a treeview;
-- Generates complete delphi unit (declaration and implementation), based on the JSON string input;
-- Automatically prefixes reserved Delphi words with "&" (ampersand);
+- Generates a complete Delphi unit or C# source file from the JSON string input;
+- Handles reserved words and valid identifiers according to the selected output language;
 - Support for JSON string that contains empty Array;
 - Adds support code to automatically destroy complex sub types. So you don't have to manage subobject's lifetime manually;
 - Uses TObjectList<T> to represent lists;
@@ -354,7 +406,7 @@ Generates Delphi Classes based on JSON string. Just like XML Data Binding, but f
 - Maps Number to Integer or Int64 depending on the number
 - Maps true/false values to Boolean;
 - Supports JSON pretty print to format the input string;
-- Simple and responsive GUI;
+- Simple and responsive GUI with selectable Delphi or C# output and language-specific syntax highlighting;
 - Automatic check for update, based on ITask (Parallel Programming Library)!
 - It's open source! You can find the source code and binary releases on GitHub.
 
@@ -363,4 +415,3 @@ Generates Delphi Classes based on JSON string. Just like XML Data Binding, but f
 *** The releases of JsonToDelphiClass (source and binaries) are public and reside on GitHub. The update unit uses GitHub's REST API to enumerate tags/releases.
 
 Report any problems/suggestions using GitHub's facilities.
-
