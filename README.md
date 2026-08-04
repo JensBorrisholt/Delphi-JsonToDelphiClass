@@ -1,7 +1,7 @@
 Delphi-JsonToDelphiClass
 ========================
 
-## Fixes & Features: 03rd August 2026 ##
+## Fixes & Features: 04th August 2026 ##
 
 ### Features ###
 
