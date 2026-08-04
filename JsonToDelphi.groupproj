@@ -3,16 +3,16 @@
         <ProjectGuid>{560647DB-14E8-40D3-BA10-4E1D58DB5EE0}</ProjectGuid>
     </PropertyGroup>
     <ItemGroup>
-        <Projects Include="Refactored\Generator GUI\JsonToDelphiClass.dproj">
+        <Projects Include="\Generator GUI\JsonToDelphiClass.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="Refactored\End To End Test\EndToEndTest.dproj">
+        <Projects Include="\End To End Test\EndToEndTest.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="Refactored\Unit Test\JsonToDelphiClassTests.dproj">
+        <Projects Include="\Unit Test\JsonToDelphiClassTests.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="Refactored\Generator LIB\GeneratorLIBRefactored.dproj">
+        <Projects Include="\Generator LIB\GeneratorLIBRefactored.dproj">
             <Dependencies/>
         </Projects>
     </ItemGroup>
@@ -24,40 +24,40 @@
         </BorlandProject>
     </ProjectExtensions>
     <Target Name="JsonToDelphiClass">
-        <MSBuild Projects="Refactored\Generator GUI\JsonToDelphiClass.dproj"/>
+        <MSBuild Projects=".\Generator GUI\JsonToDelphiClass.dproj"/>
     </Target>
     <Target Name="JsonToDelphiClass:Clean">
-        <MSBuild Projects="Refactored\Generator GUI\JsonToDelphiClass.dproj" Targets="Clean"/>
+        <MSBuild Projects=".\Generator GUI\JsonToDelphiClass.dproj" Targets="Clean"/>
     </Target>
     <Target Name="JsonToDelphiClass:Make">
-        <MSBuild Projects="Refactored\Generator GUI\JsonToDelphiClass.dproj" Targets="Make"/>
+        <MSBuild Projects=".\Generator GUI\JsonToDelphiClass.dproj" Targets="Make"/>
     </Target>
     <Target Name="EndToEndTest">
-        <MSBuild Projects="Refactored\End To End Test\EndToEndTest.dproj"/>
+        <MSBuild Projects=".\End To End Test\EndToEndTest.dproj"/>
     </Target>
     <Target Name="EndToEndTest:Clean">
-        <MSBuild Projects="Refactored\End To End Test\EndToEndTest.dproj" Targets="Clean"/>
+        <MSBuild Projects=".\End To End Test\EndToEndTest.dproj" Targets="Clean"/>
     </Target>
     <Target Name="EndToEndTest:Make">
-        <MSBuild Projects="Refactored\End To End Test\EndToEndTest.dproj" Targets="Make"/>
+        <MSBuild Projects=".\End To End Test\EndToEndTest.dproj" Targets="Make"/>
     </Target>
     <Target Name="JsonToDelphiClassTests">
-        <MSBuild Projects="Refactored\Unit Test\JsonToDelphiClassTests.dproj"/>
+        <MSBuild Projects=".\Unit Test\JsonToDelphiClassTests.dproj"/>
     </Target>
     <Target Name="JsonToDelphiClassTests:Clean">
-        <MSBuild Projects="Refactored\Unit Test\JsonToDelphiClassTests.dproj" Targets="Clean"/>
+        <MSBuild Projects=".\Unit Test\JsonToDelphiClassTests.dproj" Targets="Clean"/>
     </Target>
     <Target Name="JsonToDelphiClassTests:Make">
-        <MSBuild Projects="Refactored\Unit Test\JsonToDelphiClassTests.dproj" Targets="Make"/>
+        <MSBuild Projects=".\Unit Test\JsonToDelphiClassTests.dproj" Targets="Make"/>
     </Target>
     <Target Name="GeneratorLIB">
-        <MSBuild Projects="Refactored\Generator LIB\GeneratorLIBRefactored.dproj"/>
+        <MSBuild Projects=".\Generator LIB\GeneratorLIBRefactored.dproj"/>
     </Target>
     <Target Name="GeneratorLIB:Clean">
-        <MSBuild Projects="Refactored\Generator LIB\GeneratorLIBRefactored.dproj" Targets="Clean"/>
+        <MSBuild Projects=".\Generator LIB\GeneratorLIBRefactored.dproj" Targets="Clean"/>
     </Target>
     <Target Name="GeneratorLIB:Make">
-        <MSBuild Projects="Refactored\Generator LIB\GeneratorLIBRefactored.dproj" Targets="Make"/>
+        <MSBuild Projects=".\Generator LIB\GeneratorLIBRefactored.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
         <CallTarget Targets="JsonToDelphiClass;EndToEndTest;JsonToDelphiClassTests;GeneratorLIB"/>

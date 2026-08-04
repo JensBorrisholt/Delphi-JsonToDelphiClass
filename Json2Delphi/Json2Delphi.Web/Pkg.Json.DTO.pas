@@ -1,4 +1,4 @@
-unit Pkg.Json.DTO;
+﻿unit Pkg.Json.DTO;
 
 interface
 
@@ -8,7 +8,11 @@ type
   TArrayMapper = class
   protected
     procedure RefreshArray<T>(aSource: TList<T>; var aDestination: TArray<T>);
+    procedure RefreshArray2D<T>(aSource: TObjectList<TList<T>>;
+      var aDestination: TArray<TArray<T>>);
     function List<T>(var aList: TList<T>; aSource: TArray<T>): TList<T>;
+    function List2D<T>(var aList: TObjectList<TList<T>>;
+      aSource: TArray<TArray<T>>): TObjectList<TList<T>>;
     function ObjectList<T: class>(var aList: TObjectList<T>; aSource: TArray<T>): TObjectList<T>;
   public
     constructor Create; virtual;
@@ -27,6 +31,7 @@ type
     constructor Create; override;
     class function PrettyPrintJSON(aJson: string): string; overload;
     function ToString: string; override;
+    function Clone<T: TJsonDTO, constructor>: T;
     property AsJson: string read GetAsJson write SetAsJson;
   end;
 
@@ -45,6 +50,12 @@ implementation
 uses System.Sysutils, System.JSONConsts, System.Rtti, System.DateUtils;
 
 { TJsonDTO }
+
+function TJsonDTO.Clone<T>: T;
+begin
+  Result := T.Create;
+  Result.AsJson := AsJson;
+end;
 
 constructor TJsonDTO.Create;
 begin
@@ -202,6 +213,25 @@ begin
   Exit(aList);
 end;
 
+function TArrayMapper.List2D<T>(var aList: TObjectList<TList<T>>;
+  aSource: TArray<TArray<T>>): TObjectList<TList<T>>;
+var
+  Row: TArray<T>;
+  RowList: TList<T>;
+begin
+  if aList = nil then
+  begin
+    aList := TObjectList<TList<T>>.Create(True);
+    for Row in aSource do
+    begin
+      RowList := TList<T>.Create;
+      RowList.AddRange(Row);
+      aList.Add(RowList);
+    end;
+  end;
+  Result := aList;
+end;
+
 function TArrayMapper.ObjectList<T>(var aList: TObjectList<T>; aSource: TArray<T>): TObjectList<T>;
 var
   Element: T;
@@ -222,6 +252,18 @@ begin
     aDestination := aSource.ToArray;
 end;
 
+procedure TArrayMapper.RefreshArray2D<T>(aSource: TObjectList<TList<T>>;
+  var aDestination: TArray<TArray<T>>);
+var
+  I: Integer;
+begin
+  if aSource = nil then
+    Exit;
+  SetLength(aDestination, aSource.Count);
+  for I := 0 to aSource.Count - 1 do
+    aDestination[I] := aSource[I].ToArray;
+end;
+
 type
   TGenericListFieldInterceptor = class(TJSONInterceptor)
   public
@@ -232,14 +274,26 @@ type
 
 function TGenericListFieldInterceptor.ObjectsConverter(Data: TObject; Field: string): TListOfObjects;
 var
-  ctx: TRttiContext;
+  I: Integer;
+  RttiContext: TRttiContext;
   List: TList<TObject>;
   RttiProperty: TRttiProperty;
 begin
-  RttiProperty := ctx.GetType(Data.ClassInfo).GetProperty(Copy(Field, 2, MAXINT));
+  SetLength(Result, 0);
+  RttiProperty := RttiContext.GetType(Data.ClassType).GetProperty(
+    Copy(Field, 2, MaxInt));
+  if RttiProperty = nil then
+    raise EInvalidOperation.CreateFmt(
+      'Generic list property for field %s was not found on %s',
+      [Field, Data.ClassName]);
+
   List := TList<TObject>(RttiProperty.GetValue(Data).AsObject);
-  Result := TListOfObjects(List.List);
+  if List = nil then
+    Exit;
+
   SetLength(Result, List.Count);
+  for I := 0 to List.Count - 1 do
+    Result[I] := List[I];
 end;
 
 constructor GenericListReflectAttribute.Create;

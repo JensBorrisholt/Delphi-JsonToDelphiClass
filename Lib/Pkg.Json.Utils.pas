@@ -4,12 +4,7 @@ interface
 
 uses
   System.Classes,
-{$IFDEF MSWINDOWS}
   Winapi.ShellAPI, Winapi.Windows,
-{$ENDIF MSWINDOWS}
-{$IFDEF POSIX}
-  Posix.Stdlib,
-{$ENDIF POSIX}
   System.Json.Writers, System.Json.Readers, System.SysUtils;
 
 type
@@ -24,8 +19,6 @@ type
   end;
 
   TJsonStringReader = class(TJsonTextReader)
-  private
-    FStrinReader: TStringReader;
   public
     constructor Create(const AJson: string);
     destructor Destroy; override;
@@ -43,12 +36,7 @@ uses
 
 procedure ShellExecute(aFileName: string);
 begin
-{$IFDEF MSWINDOWS}
   Winapi.ShellAPI.ShellExecute(0, 'OPEN', PChar(aFileName), '', '', SW_SHOWNORMAL);
-{$ENDIF MSWINDOWS}
-{$IFDEF POSIX}
-  _system(PAnsiChar('open ' + AnsiString(aFileName)));
-{$ENDIF POSIX}
 end;
 
 function JsonReformat(const AJson: string; Indented: Boolean): string;
@@ -106,13 +94,12 @@ end;
 
 constructor TJsonStringReader.Create(const AJson: string);
 begin
-  FStrinReader := TStringReader.Create(AJson);
-  inherited Create(FStrinReader);
+  inherited Create(TStringReader.Create(AJson));
 end;
 
 destructor TJsonStringReader.Destroy;
 begin
-  FStrinReader.Free;
+  Reader.Free;
   inherited Destroy;
 end;
 
