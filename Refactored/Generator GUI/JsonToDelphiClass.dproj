@@ -95,8 +95,8 @@
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=4.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=4.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_MajorVer>4</VerInfo_MajorVer>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
@@ -110,12 +110,13 @@
             <Form>MainForm</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="Syntax\Pkg.Json.Syntax.Incremental.pas"/>
         <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.Visualizer.pas"/>
-        <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.GitHub.pas"/>
         <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.DemoProject.pas"/>
         <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.UpdateForm.pas">
             <Form>UpdateForm</Form>
         </DCCReference>
+        <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.GitHub.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
@@ -139,6 +140,8 @@
                 <Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dcloffice2k290.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dclofficexp290.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+                    <Excluded_Packages Name="C:\Program Files (x86)\DevExpress\VCL\Library\RS29\dcldxPSTeeChartRS29.bpl">ExpressPrinting System ReportLink for TeeChart by Developer Express Inc.</Excluded_Packages>
+                    <Excluded_Packages Name="C:\Program Files (x86)\DevExpress\VCL\Library\RS29\dcldxPSDBTeeChartRS29.bpl">ExpressPrinting System ReportLink for DBTeeChart by Developer Express Inc.</Excluded_Packages>
                 </Excluded_Packages>
             </Delphi.Personality>
             <Platforms>

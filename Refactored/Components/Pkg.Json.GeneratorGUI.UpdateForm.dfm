@@ -17,7 +17,7 @@ object UpdateForm: TUpdateForm
   object lblVersion: TLabel
     Left = 16
     Top = 16
-    Width = 150
+    Width = 4
     Height = 20
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText

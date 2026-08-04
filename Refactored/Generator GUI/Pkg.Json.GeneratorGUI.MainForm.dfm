@@ -15,7 +15,6 @@ object MainForm: TMainForm
   Menu = MainMenu
   Position = poScreenCenter
   OnCreate = FormCreate
-  OnDestroy = FormDestroy
   TextHeight = 15
   object pnlNames: TPanel
     Left = 0
@@ -88,7 +87,6 @@ object MainForm: TMainForm
     Padding.Right = 12
     Padding.Bottom = 8
     TabOrder = 1
-    ExplicitHeight = 640
     object lblInput: TLabel
       Left = 300
       Top = 5
@@ -126,8 +124,8 @@ object MainForm: TMainForm
       Width = 8
       Height = 582
       Beveled = True
-      ExplicitHeight = 608
       Visible = False
+      ExplicitHeight = 608
     end
     object memJson: TRichEdit
       Left = 300
@@ -197,13 +195,15 @@ object MainForm: TMainForm
     object lblGitHub: TLabel
       Left = 12
       Top = 0
-      Width = 38
-      Height = 15
+      Width = 1108
+      Height = 26
       Cursor = crHandPoint
       Align = alClient
       Caption = 'GitHub'
       Layout = tlCenter
       OnClick = lblGitHubClick
+      ExplicitWidth = 38
+      ExplicitHeight = 15
     end
   end
   object MainMenu: TMainMenu
@@ -241,15 +241,19 @@ object MainForm: TMainForm
       Caption = '&Convert'
       object miDelphiUnit: TMenuItem
         Action = actDelphiUnit
+        AutoCheck = True
       end
       object miBSON: TMenuItem
         Action = actBSON
+        AutoCheck = True
       end
       object miMinifyJson: TMenuItem
         Action = actMinifyJson
+        AutoCheck = True
       end
       object miDemoProject: TMenuItem
         Action = actDemoProject
+        AutoCheck = True
       end
     end
   end

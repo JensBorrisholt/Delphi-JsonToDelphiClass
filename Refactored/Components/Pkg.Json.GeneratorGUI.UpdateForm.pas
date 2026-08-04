@@ -31,14 +31,15 @@ uses
 
 procedure TUpdateForm.btnOpenReleaseClick(Sender: TObject);
 begin
-  if FRelease <> nil then
+  if FRelease.Valid then
     ShellExecute(FRelease.HtmlUrl);
 end;
 
 procedure TUpdateForm.FormShow(Sender: TObject);
 begin
-  if FRelease = nil then
+  if not FRelease.Valid then
     Exit;
+
   lblVersion.Caption := 'Version ' + FRelease.TagName + ' is available';
   memReleaseNotes.Text := FRelease.Body;
 end;

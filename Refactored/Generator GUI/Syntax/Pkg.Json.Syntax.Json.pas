@@ -20,7 +20,7 @@ uses
 function TJsonSyntaxHighlighter.TokenizeLine(const Text: string;
   var State: Integer): TSyntaxLine;
 var
-  P, StartP, EndP: PChar;
+  P, StartP, EndP, LookAhead: PChar;
   Tokens: TList<TSyntaxToken>;
   Word: string;
 begin
@@ -44,7 +44,13 @@ begin
           end
           else
             Inc(P);
-        AddToken(Tokens, tkString, StartP, P - StartP);
+        LookAhead := P;
+        while (LookAhead < EndP) and IsWhite(LookAhead^) do
+          Inc(LookAhead);
+        if (LookAhead < EndP) and (LookAhead^ = ':') then
+          AddToken(Tokens, tkPropertyName, StartP, P - StartP)
+        else
+          AddToken(Tokens, tkString, StartP, P - StartP);
       end
       else if IsDigit(P^) or (P^ = '-') then
       begin

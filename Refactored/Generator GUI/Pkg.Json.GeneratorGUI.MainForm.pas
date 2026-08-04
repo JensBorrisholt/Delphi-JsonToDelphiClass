@@ -4,9 +4,8 @@ interface
 
 uses
   System.Classes, System.SysUtils, System.Actions, System.UITypes,
-  Vcl.ActnList, Vcl.ComCtrls, Vcl.Controls, Vcl.Dialogs, Vcl.ExtCtrls,
-  Vcl.Forms, Vcl.Menus, Vcl.StdCtrls,
-  Pkg.Json.GeneratorGUI.GitHub;
+  Vcl.ActnList, Vcl.ComCtrls, Vcl.Controls, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Forms, Vcl.Menus, Vcl.StdCtrls,
+  Pkg.Json.GeneratorGUI.GitHub, Pkg.Json.Syntax.Incremental;
 
 type
   TMainForm = class(TForm)
@@ -69,11 +68,11 @@ type
     procedure ActionListUpdate(Action: TBasicAction; var Handled: Boolean);
     procedure edtClassNameChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
     procedure lblGitHubClick(Sender: TObject);
     procedure memJsonChange(Sender: TObject);
   private
-    FClosing: Boolean;
+    FJsonHighlighter: IIncrementalSyntaxHighlighter;
+    FUpdateRequest: IUpdateRequest;
     FRelease: TGitHubRelease;
     FOutputPages: TPageControl;
     FDelphiTab: TTabSheet;
@@ -85,7 +84,6 @@ type
     function CurrentOutput(out AExtension: string): TRichEdit;
     procedure ClearOutput;
     function FormatJsonInput(const AShowError: Boolean): Boolean;
-    procedure HighlightJson;
     procedure HighlightDelphi;
     procedure SetStatus(const AText: string);
   end;
@@ -109,9 +107,7 @@ uses
 
 procedure TMainForm.ActionListUpdate(Action: TBasicAction; var Handled: Boolean);
 begin
-  actConvert.Enabled := (Trim(memJson.Text) <> '') and
-    (actDelphiUnit.Checked or actBSON.Checked or actMinifyJson.Checked or
-     actDemoProject.Checked);
+  actConvert.Enabled := (Trim(memJson.Text) <> '') and (actDelphiUnit.Checked or actBSON.Checked or actMinifyJson.Checked or actDemoProject.Checked);
   var Extension: string;
   var Editor := CurrentOutput(Extension);
   actSaveAs.Enabled := (Editor <> nil) and (Editor.Text <> '');
@@ -121,6 +117,7 @@ procedure TMainForm.actConvertExecute(Sender: TObject);
 begin
   var Options := TGeneratorOptions.FromSettings(TSettings.Instance);
   var Generator := TJsonToDelphiGenerator.Create(Options);
+
   try
     if not Generator.IsValid(memJson.Text) then
       raise EConvertError.Create('Input is not valid JSON.');
@@ -129,36 +126,45 @@ begin
     Generator.DestinationUnitName := Trim(edtUnitName.Text);
     Generator.Parse(memJson.Text);
     TJsonModelVisualizer.Visualize(treeJson, Generator.Model);
+
     var DelphiSource := '';
     if actDelphiUnit.Checked or actDemoProject.Checked then
       DelphiSource := Generator.GenerateUnit;
+
     if actDelphiUnit.Checked then
     begin
       memOutput.Text := DelphiSource;
       HighlightDelphi;
     end;
+
     if actBSON.Checked then
       FBsonOutput.Text := TJSONConverter.Json2BsonString(memJson.Text);
+
     if actMinifyJson.Checked then
       FMinifyOutput.Text := TJSONConverter.MinifyJson(memJson.Text);
+
     if actDemoProject.Checked then
     begin
-      var Destination := '';
-      if SelectDirectory('Select destination for the demo project', '',
-        Destination) then
-        TDemoProjectGenerator.Generate(Destination,
-          Trim(edtUnitName.Text), Generator.GeneratedRootClassName,
-          memJson.Text, DelphiSource);
+      var
+      Destination := '';
+      if SelectDirectory('Select destination for the demo project', '', Destination) then
+        TDemoProjectGenerator.Generate(Destination, Trim(edtUnitName.Text), Generator.GeneratedRootClassName, memJson.Text, DelphiSource);
     end;
-    if actDelphiUnit.Checked then FOutputPages.ActivePage := FDelphiTab
-    else if actBSON.Checked then FOutputPages.ActivePage := FBsonTab
-    else FOutputPages.ActivePage := FMinifyTab;
+
+    if actDelphiUnit.Checked then
+      FOutputPages.ActivePage := FDelphiTab
+    else if actBSON.Checked then
+      FOutputPages.ActivePage := FBsonTab
+    else
+      FOutputPages.ActivePage := FMinifyTab;
+
     SetStatus('Selected output formats generated successfully.');
   except
     on E: EJsonGenerator do
     begin
       ClearOutput;
       SetStatus(E.Message);
+
       if E.JsonPath <> '' then
       begin
         memJson.SetFocus;
@@ -180,7 +186,8 @@ end;
 
 procedure TMainForm.actOutputToggleExecute(Sender: TObject);
 begin
-  if FOutputPages = nil then Exit;
+  if FOutputPages = nil then
+    Exit;
   FDelphiTab.TabVisible := actDelphiUnit.Checked;
   FBsonTab.TabVisible := actBSON.Checked;
   FMinifyTab.TabVisible := actMinifyJson.Checked;
@@ -197,23 +204,28 @@ begin
 end;
 
 procedure TMainForm.actOpenExecute(Sender: TObject);
+var
+  ChangeHandler: TNotifyEvent;
 begin
   if not OpenDialog.Execute then
     Exit;
 
+  ChangeHandler := memJson.OnChange;
+  memJson.OnChange := nil;
   memJson.Lines.BeginUpdate;
   try
     memJson.Lines.LoadFromFile(OpenDialog.FileName, TEncoding.UTF8);
+    if FormatJsonInput(False) then
+      SetStatus(Format('Loaded and formatted %s', [ExtractFileName(OpenDialog.FileName)]))
+    else
+    begin
+      SetStatus('The opened file does not contain valid JSON.');
+      MessageDlg('The file was opened, but it does not contain valid JSON.', mtWarning, [mbOK], 0);
+    end;
+
   finally
     memJson.Lines.EndUpdate;
-  end;
-
-  if FormatJsonInput(False) then
-    SetStatus(Format('Loaded and formatted %s', [ExtractFileName(OpenDialog.FileName)]))
-  else
-  begin
-    SetStatus('The opened file does not contain valid JSON.');
-    MessageDlg('The file was opened, but it does not contain valid JSON.', mtWarning, [mbOK], 0);
+    memJson.OnChange := ChangeHandler;
   end;
 end;
 
@@ -221,9 +233,12 @@ procedure TMainForm.actSaveAsExecute(Sender: TObject);
 begin
   var Extension: string;
   var Editor := CurrentOutput(Extension);
-  if Editor = nil then Exit;
+  if Editor = nil then
+    Exit;
+
   SaveDialog.DefaultExt := Extension;
   SaveDialog.FileName := Trim(edtUnitName.Text) + '.' + Extension;
+
   if not SaveDialog.Execute then
     Exit;
 
@@ -244,13 +259,16 @@ end;
 procedure TMainForm.ClearOutput;
 begin
   memOutput.Clear;
-  if FBsonOutput <> nil then FBsonOutput.Clear;
-  if FMinifyOutput <> nil then FMinifyOutput.Clear;
+  if FBsonOutput <> nil then
+    FBsonOutput.Clear;
+
+  if FMinifyOutput <> nil then
+    FMinifyOutput.Clear;
+
   treeJson.Items.Clear;
 end;
 
-function TMainForm.CreateOutputTab(const ACaption: string;
-  out ATab: TTabSheet): TRichEdit;
+function TMainForm.CreateOutputTab(const ACaption: string; out ATab: TTabSheet): TRichEdit;
 begin
   ATab := TTabSheet.Create(Self);
   ATab.PageControl := FOutputPages;
@@ -268,13 +286,24 @@ function TMainForm.CurrentOutput(out AExtension: string): TRichEdit;
 begin
   Result := nil;
   AExtension := '';
-  if FOutputPages = nil then Exit;
-  if FOutputPages.ActivePage = FDelphiTab then
-  begin Result := memOutput; AExtension := 'pas' end
+  if FOutputPages = nil then
+    Exit;
+
+ if FOutputPages.ActivePage = FDelphiTab then
+  begin
+    Result := memOutput;
+    AExtension := 'pas'
+  end
   else if FOutputPages.ActivePage = FBsonTab then
-  begin Result := FBsonOutput; AExtension := 'bson' end
+  begin
+    Result := FBsonOutput;
+    AExtension := 'bson'
+  end
   else if FOutputPages.ActivePage = FMinifyTab then
-  begin Result := FMinifyOutput; AExtension := 'json' end;
+  begin
+    Result := FMinifyOutput;
+    AExtension := 'json'
+  end;
 end;
 
 procedure TMainForm.actClassVisualizerExecute(Sender: TObject);
@@ -284,28 +313,20 @@ begin
   lblStructure.Visible := actClassVisualizer.Checked;
 end;
 
-procedure TMainForm.HighlightJson;
-begin
-  TSyntaxRichEditRenderer.Highlight(memJson, slJson);
-end;
-
 procedure TMainForm.HighlightDelphi;
 begin
   TSyntaxRichEditRenderer.Highlight(memOutput, slDelphi);
 end;
 
 function TMainForm.FormatJsonInput(const AShowError: Boolean): Boolean;
-var
-  Formatted: string;
 begin
   Result := False;
   try
-    Formatted := PrettyPrint(memJson.Text);
-    memJson.Text := Formatted;
+    memJson.Text := PrettyPrint(memJson.Text);
     memJson.SelStart := 0;
     memJson.SelLength := 0;
     SetStatus('JSON formatted successfully.');
-    HighlightJson;
+    FJsonHighlighter.HighlightAll;
     Result := True;
   except
     on E: Exception do
@@ -325,6 +346,7 @@ end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
+  FJsonHighlighter := TIncrementalSyntaxHighlighter.Create(memJson, slJson);
   FOutputPages := TPageControl.Create(Self);
   FOutputPages.Parent := pnlWorkspace;
   FOutputPages.Align := alClient;
@@ -339,51 +361,41 @@ begin
   edtClassName.Text := 'Root';
   SetStatus('Paste JSON or open a JSON file to begin.');
   lblGitHub.Caption := 'Checking GitHub for updates...';
-  TGitHubUpdateService.CheckForUpdate(
+
+  FUpdateRequest := TGitHubUpdateService.CheckForUpdate(
     procedure(const ARelease: TGitHubRelease; const AError: string)
     begin
-      if FClosing then
-      begin
-        ARelease.Free;
-        Exit;
-      end;
-      FreeAndNil(FRelease);
       FRelease := ARelease;
       if AError <> '' then
         lblGitHub.Caption := 'GitHub update check failed: ' + AError
-      else if FRelease <> nil then
-        lblGitHub.Caption := 'Version ' + FRelease.TagName +
-          ' is available — click to view'
+      else if FRelease.Valid then
+        lblGitHub.Caption := 'Version ' + FRelease.TagName + ' is available — click to view'
       else
-        lblGitHub.Caption := 'Version ' + ProgramVersion +
-          ' is up to date — view project on GitHub';
+        lblGitHub.Caption := 'Version ' + ProgramVersion + ' is up to date — view project on GitHub';
     end);
-end;
-
-procedure TMainForm.FormDestroy(Sender: TObject);
-begin
-  FClosing := True;
-  FreeAndNil(FRelease);
 end;
 
 procedure TMainForm.lblGitHubClick(Sender: TObject);
 begin
-  if FRelease = nil then
+  if not FRelease.Valid then
     ShellExecute(ProgramUrl)
   else
     with TUpdateForm.Create(Self) do
-    try
-      NewRelease := FRelease;
-      ShowModal;
-    finally
-      Free;
-    end;
+      try
+        NewRelease := FRelease;
+        ShowModal;
+      finally
+        Free;
+      end;
 end;
 
 procedure TMainForm.memJsonChange(Sender: TObject);
 begin
   ClearOutput;
   SetStatus('Input changed; generate the unit again.');
+
+  if FJsonHighlighter <> nil then
+    FJsonHighlighter.TextChanged;
 end;
 
 procedure TMainForm.SetStatus(const AText: string);

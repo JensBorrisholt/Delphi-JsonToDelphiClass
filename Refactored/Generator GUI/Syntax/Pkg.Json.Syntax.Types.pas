@@ -3,8 +3,8 @@ unit Pkg.Json.Syntax.Types;
 interface
 
 type
-  TSyntaxTokenKind = (tkText, tkKeyword, tkString, tkComment, tkNumber,
-    tkSymbol);
+  TSyntaxTokenKind = (tkText, tkKeyword, tkPropertyName, tkString, tkComment,
+    tkNumber, tkSymbol);
 
   TSyntaxToken = record
     Kind: TSyntaxTokenKind;
