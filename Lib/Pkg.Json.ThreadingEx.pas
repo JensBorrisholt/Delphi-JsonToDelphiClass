@@ -1,4 +1,4 @@
-﻿unit Pkg.Json.ThreadingEx;
+unit Pkg.Json.ThreadingEx;
 
 interface
 

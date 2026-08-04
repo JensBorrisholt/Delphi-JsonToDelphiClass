@@ -1,7 +1,7 @@
 object MainForm: TMainForm
   Left = 0
   Top = 0
-  Caption = 'JSON to Delphi Class'
+  Caption = 'JSON Class Generator'
   ClientHeight = 720
   ClientWidth = 1120
   Color = clBtnFace
@@ -15,6 +15,7 @@ object MainForm: TMainForm
   Menu = MainMenu
   Position = poScreenCenter
   OnCreate = FormCreate
+  OnDestroy = FormDestroy
   TextHeight = 15
   object pnlNames: TPanel
     Left = 0
@@ -195,15 +196,13 @@ object MainForm: TMainForm
     object lblGitHub: TLabel
       Left = 12
       Top = 0
-      Width = 1108
-      Height = 26
+      Width = 38
+      Height = 15
       Cursor = crHandPoint
       Align = alClient
       Caption = 'GitHub'
       Layout = tlCenter
       OnClick = lblGitHubClick
-      ExplicitWidth = 38
-      ExplicitHeight = 15
     end
   end
   object MainMenu: TMainMenu
@@ -243,6 +242,10 @@ object MainForm: TMainForm
         Action = actDelphiUnit
         AutoCheck = True
       end
+      object miCSharpSource: TMenuItem
+        Action = actCSharpSource
+        AutoCheck = True
+      end
       object miBSON: TMenuItem
         Action = actBSON
         AutoCheck = True
@@ -267,7 +270,7 @@ object MainForm: TMainForm
       OnExecute = actOpenExecute
     end
     object actSaveAs: TAction
-      Caption = '&Save Delphi unit as...'
+      Caption = '&Save output as...'
       ShortCut = 16467
       OnExecute = actSaveAsExecute
     end
@@ -280,7 +283,7 @@ object MainForm: TMainForm
       OnExecute = actSettingsExecute
     end
     object actConvert: TAction
-      Caption = '&Generate unit'
+      Caption = '&Generate output'
       ShortCut = 16500
       OnExecute = actConvertExecute
     end
@@ -298,6 +301,11 @@ object MainForm: TMainForm
       AutoCheck = True
       Caption = 'Delphi Unit'
       Checked = True
+      OnExecute = actOutputToggleExecute
+    end
+    object actCSharpSource: TAction
+      AutoCheck = True
+      Caption = 'C# Source'
       OnExecute = actOutputToggleExecute
     end
     object actBSON: TAction

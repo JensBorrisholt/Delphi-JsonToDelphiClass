@@ -1,11 +1,12 @@
-﻿unit Pkg.Json.GeneratorGUI.MainForm;
+unit Pkg.Json.GeneratorGUI.MainForm;
 
 interface
 
 uses
   System.Classes, System.SysUtils, System.Actions, System.UITypes,
   Vcl.ActnList, Vcl.ComCtrls, Vcl.Controls, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Forms, Vcl.Menus, Vcl.StdCtrls,
-  Pkg.Json.GeneratorGUI.GitHub, Pkg.Json.Syntax.Incremental;
+  Pkg.Json.GeneratorGUI.GitHub, Pkg.Json.Syntax.Incremental,
+  Pkg.Json.Generator.DelphiSettings, Pkg.Json.Generator.CSharpSettings;
 
 type
   TMainForm = class(TForm)
@@ -21,6 +22,7 @@ type
     actDelphiUnit: TAction;
     actMinifyJson: TAction;
     actDemoProject: TAction;
+    actCSharpSource: TAction;
     btnConvert: TButton;
     btnFormatJson: TButton;
     edtClassName: TEdit;
@@ -48,6 +50,7 @@ type
     miDelphiUnit: TMenuItem;
     miMinifyJson: TMenuItem;
     miDemoProject: TMenuItem;
+    miCSharpSource: TMenuItem;
     OpenDialog: TOpenDialog;
     pnlNames: TPanel;
     pnlWorkspace: TPanel;
@@ -68,6 +71,7 @@ type
     procedure ActionListUpdate(Action: TBasicAction; var Handled: Boolean);
     procedure edtClassNameChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
     procedure lblGitHubClick(Sender: TObject);
     procedure memJsonChange(Sender: TObject);
   private
@@ -78,13 +82,19 @@ type
     FDelphiTab: TTabSheet;
     FBsonTab: TTabSheet;
     FMinifyTab: TTabSheet;
+    FCSharpTab: TTabSheet;
     FBsonOutput: TRichEdit;
     FMinifyOutput: TRichEdit;
+    FCSharpOutput: TRichEdit;
+    FDelphiSettings: TDelphiSettings;
+    FCSharpSettings: TCSharpSettings;
     function CreateOutputTab(const ACaption: string; out ATab: TTabSheet): TRichEdit;
     function CurrentOutput(out AExtension: string): TRichEdit;
     procedure ClearOutput;
     function FormatJsonInput(const AShowError: Boolean): Boolean;
     procedure HighlightDelphi;
+    procedure HighlightCSharp;
+    procedure UpdateOutputCaption;
     procedure SetStatus(const AText: string);
   end;
 
@@ -95,8 +105,8 @@ implementation
 
 uses
   System.IOUtils, Winapi.Messages, Vcl.FileCtrl,
-  Pkg.Json.Generator, Pkg.Json.Generator.Errors, Pkg.Json.Generator.Options,
-  Pkg.Json.Settings, Pkg.Json.Lib.JSONConverter,
+  Pkg.Json.Generator.Delphi, Pkg.Json.Generator.CSharp, Pkg.Json.Generator.Errors,
+  Pkg.Json.Lib.JSONConverter,
   Pkg.Json.GeneratorGUI.SettingsForm, Pkg.Json.Utils,
   Pkg.Json.GeneratorGUI.UpdateForm, Pkg.Json.GeneratorGUI.Visualizer,
   Pkg.Json.GeneratorGUI.DemoProject,
@@ -109,33 +119,68 @@ procedure TMainForm.ActionListUpdate(Action: TBasicAction; var Handled: Boolean)
 var
   Extension: string;
 begin
-  actConvert.Enabled := (Trim(memJson.Text) <> '') and (actDelphiUnit.Checked or actBSON.Checked or actMinifyJson.Checked or actDemoProject.Checked);
+  actConvert.Enabled := (Trim(memJson.Text) <> '') and (actDelphiUnit.Checked or actCSharpSource.Checked or actBSON.Checked or actMinifyJson.Checked or actDemoProject.Checked);
   var Editor := CurrentOutput(Extension);
   actSaveAs.Enabled := (Editor <> nil) and (Editor.Text <> '');
 end;
 
 procedure TMainForm.actConvertExecute(Sender: TObject);
+var
+  DelphiGenerator: TJsonToDelphiGenerator;
+  CSharpGenerator: TJsonToCSharpGenerator;
+  DelphiSource: string;
+  CSharpSource: string;
+  GeneratedSomething: Boolean;
 begin
-  var Options := TGeneratorOptions.FromSettings(TSettings.Instance);
-  var Generator := TJsonToDelphiGenerator.Create(Options);
+  DelphiGenerator := nil;
+  CSharpGenerator := nil;
+  DelphiSource := '';
+  CSharpSource := '';
+  GeneratedSomething := False;
 
   try
-    if not Generator.IsValid(memJson.Text) then
-      raise EConvertError.Create('Input is not valid JSON.');
-
-    Generator.RootClassName := Trim(edtClassName.Text);
-    Generator.DestinationUnitName := Trim(edtUnitName.Text);
-    Generator.Parse(memJson.Text);
-    TJsonModelVisualizer.Visualize(treeJson, Generator.Model);
-
-    var DelphiSource := '';
     if actDelphiUnit.Checked or actDemoProject.Checked then
-      DelphiSource := Generator.GenerateUnit;
+    begin
+      DelphiGenerator := TJsonToDelphiGenerator.Create(FDelphiSettings);
+
+      if not DelphiGenerator.IsValid(memJson.Text) then
+        raise EConvertError.Create('Input is not valid JSON.');
+
+      DelphiGenerator.RootClassName := Trim(edtClassName.Text);
+      DelphiGenerator.DestinationUnitName := Trim(edtUnitName.Text);
+      DelphiGenerator.Parse(memJson.Text);
+      TJsonModelVisualizer.Visualize(treeJson, DelphiGenerator.Model);
+      DelphiSource := DelphiGenerator.GenerateUnit;
+      GeneratedSomething := True;
+    end;
+
+    if actCSharpSource.Checked then
+    begin
+      CSharpGenerator := TJsonToCSharpGenerator.Create(FCSharpSettings);
+
+      if not CSharpGenerator.IsValid(memJson.Text) then
+        raise EConvertError.Create('Input is not valid JSON.');
+
+      CSharpGenerator.RootClassName := Trim(edtClassName.Text);
+      CSharpGenerator.Parse(memJson.Text);
+
+      if DelphiGenerator = nil then
+        TJsonModelVisualizer.Visualize(treeJson, CSharpGenerator.Model);
+
+      CSharpSource := CSharpGenerator.GenerateSource;
+      GeneratedSomething := True;
+    end;
 
     if actDelphiUnit.Checked then
     begin
       memOutput.Text := DelphiSource;
       HighlightDelphi;
+    end;
+
+    if actCSharpSource.Checked then
+    begin
+      FCSharpOutput.Text := CSharpSource;
+      HighlightCSharp;
     end;
 
     if actBSON.Checked then
@@ -146,20 +191,24 @@ begin
 
     if actDemoProject.Checked then
     begin
-      var
-      Destination := '';
+      var Destination := '';
       if SelectDirectory('Select destination for the demo project', '', Destination) then
-        TDemoProjectGenerator.Generate(Destination, Trim(edtUnitName.Text), Generator.GeneratedRootClassName, memJson.Text, DelphiSource);
+        TDemoProjectGenerator.Generate(Destination, Trim(edtUnitName.Text), DelphiGenerator.GeneratedRootClassName, memJson.Text, DelphiSource);
     end;
 
     if actDelphiUnit.Checked then
       FOutputPages.ActivePage := FDelphiTab
+    else if actCSharpSource.Checked then
+      FOutputPages.ActivePage := FCSharpTab
     else if actBSON.Checked then
       FOutputPages.ActivePage := FBsonTab
     else
       FOutputPages.ActivePage := FMinifyTab;
 
-    SetStatus('Selected output formats generated successfully.');
+    if GeneratedSomething then
+      SetStatus('Selected output formats generated successfully.')
+    else
+      SetStatus('No output format selected.');
   except
     on E: EJsonGenerator do
     begin
@@ -182,7 +231,9 @@ begin
       MessageDlg(E.Message, mtError, [mbOK], 0);
     end;
   end;
-  Generator.Free;
+
+  CSharpGenerator.Free;
+  DelphiGenerator.Free;
 end;
 
 procedure TMainForm.actOutputToggleExecute(Sender: TObject);
@@ -190,7 +241,10 @@ begin
   if FOutputPages = nil then
     Exit;
 
+  UpdateOutputCaption;
+
   FDelphiTab.TabVisible := actDelphiUnit.Checked;
+  FCSharpTab.TabVisible := actCSharpSource.Checked;
   FBsonTab.TabVisible := actBSON.Checked;
   FMinifyTab.TabVisible := actMinifyJson.Checked;
 end;
@@ -240,6 +294,7 @@ begin
     Exit;
 
   SaveDialog.DefaultExt := Extension;
+  SaveDialog.Filter := Format('%s files (*.%s)|*.%s|All files (*.*)|*.*', [UpperCase(Extension), Extension, Extension]);
   SaveDialog.FileName := Trim(edtUnitName.Text) + '.' + Extension;
 
   if not SaveDialog.Execute then
@@ -251,12 +306,11 @@ end;
 
 procedure TMainForm.actSettingsExecute(Sender: TObject);
 begin
-  with TSettingsForm.Create(Self) do
-    try
-      ShowModal;
-    finally
-      Free;
-    end;
+  if TSettingsForm.Execute(Self, FDelphiSettings, FCSharpSettings) then
+  begin
+    ClearOutput;
+    SetStatus('Generator settings updated.');
+  end;
 end;
 
 procedure TMainForm.ClearOutput;
@@ -267,6 +321,9 @@ begin
 
   if FMinifyOutput <> nil then
     FMinifyOutput.Clear;
+
+  if FCSharpOutput <> nil then
+    FCSharpOutput.Clear;
 
   treeJson.Items.Clear;
 end;
@@ -292,10 +349,15 @@ begin
   if FOutputPages = nil then
     Exit;
 
- if FOutputPages.ActivePage = FDelphiTab then
+  if FOutputPages.ActivePage = FDelphiTab then
   begin
     Result := memOutput;
     AExtension := 'pas'
+  end
+  else if FOutputPages.ActivePage = FCSharpTab then
+  begin
+    Result := FCSharpOutput;
+    AExtension := 'cs'
   end
   else if FOutputPages.ActivePage = FBsonTab then
   begin
@@ -316,9 +378,24 @@ begin
   lblStructure.Visible := actClassVisualizer.Checked;
 end;
 
+procedure TMainForm.HighlightCSharp;
+begin
+  TSyntaxRichEditRenderer.Highlight(FCSharpOutput, slCSharp);
+end;
+
 procedure TMainForm.HighlightDelphi;
 begin
   TSyntaxRichEditRenderer.Highlight(memOutput, slDelphi);
+end;
+
+procedure TMainForm.UpdateOutputCaption;
+begin
+  if actCSharpSource.Checked and not actDelphiUnit.Checked then
+    lblOutput.Caption := 'C# output'
+  else if actDelphiUnit.Checked and not actCSharpSource.Checked then
+    lblOutput.Caption := 'Delphi output'
+  else
+    lblOutput.Caption := 'Generated output';
 end;
 
 function TMainForm.FormatJsonInput(const AShowError: Boolean): Boolean;
@@ -360,8 +437,12 @@ begin
   memOutput.Align := alClient;
   FBsonOutput := CreateOutputTab('BSON', FBsonTab);
   FMinifyOutput := CreateOutputTab('Minify JSON', FMinifyTab);
+  FCSharpOutput := CreateOutputTab('C# Source', FCSharpTab);
+  FDelphiSettings := TDelphiSettings.Create;
+  FCSharpSettings := TCSharpSettings.Create;
   actOutputToggleExecute(nil);
   edtClassName.Text := 'Root';
+  UpdateOutputCaption;
   SetStatus('Paste JSON or open a JSON file to begin.');
   lblGitHub.Caption := 'Checking GitHub for updates...';
 
@@ -376,6 +457,12 @@ begin
       else
         lblGitHub.Caption := 'Version ' + ProgramVersion + ' is up to date — view project on GitHub';
     end);
+end;
+
+procedure TMainForm.FormDestroy(Sender: TObject);
+begin
+  FCSharpSettings.Free;
+  FDelphiSettings.Free;
 end;
 
 procedure TMainForm.lblGitHubClick(Sender: TObject);
@@ -395,7 +482,7 @@ end;
 procedure TMainForm.memJsonChange(Sender: TObject);
 begin
   ClearOutput;
-  SetStatus('Input changed; generate the unit again.');
+  SetStatus('Input changed; generate output again.');
 
   if FJsonHighlighter <> nil then
     FJsonHighlighter.TextChanged;

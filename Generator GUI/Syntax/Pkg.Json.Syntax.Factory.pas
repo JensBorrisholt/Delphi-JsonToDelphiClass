@@ -10,6 +10,7 @@ type
   private
     class var FJson: TSyntaxHighlighter;
     class var FDelphi: TSyntaxHighlighter;
+    class var FCSharp: TSyntaxHighlighter;
   public
     class constructor Create;
     class destructor Destroy;
@@ -20,16 +21,18 @@ type
 implementation
 
 uses
-  Pkg.Json.Syntax.Delphi, Pkg.Json.Syntax.Json;
+  Pkg.Json.Syntax.Delphi, Pkg.Json.Syntax.CSharp, Pkg.Json.Syntax.Json;
 
 class constructor TSyntaxHighlighterFactory.Create;
 begin
   FJson := TJsonSyntaxHighlighter.Create;
   FDelphi := TDelphiSyntaxHighlighter.Create;
+  FCSharp := TCSharpSyntaxHighlighter.Create;
 end;
 
 class destructor TSyntaxHighlighterFactory.Destroy;
 begin
+  FCSharp.Free;
   FDelphi.Free;
   FJson.Free;
 end;
@@ -40,6 +43,7 @@ begin
   case Language of
     slJson: Result := FJson;
     slDelphi: Result := FDelphi;
+    slCSharp: Result := FCSharp;
   else
     Result := FJson;
   end;
