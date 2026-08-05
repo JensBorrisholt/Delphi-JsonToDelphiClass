@@ -87,7 +87,7 @@ begin
     Exit(False);
 
   Leaf := AType.LeafType;
-  Result := (Leaf <> nil) and (Leaf.SemanticKind in [svkBoolean, svkInteger, svkInteger64, svkFloat, svkDateTime, svkBytes]);
+  Result := (Leaf <> nil) and (Leaf.SemanticKind in [svkBoolean, svkInteger, svkInteger64, svkFloat, svkDate, svkTime, svkDateTime, svkGuid, svkBytes]);
 end;
 
 function TCSharpWriter.JsonPropertyNameAttribute(AField: TGeneratorField): string;
@@ -173,8 +173,16 @@ begin
       Result := 'long';
     svkFloat:
       Result := 'double';
+    svkDate:
+      Result := 'DateOnly';
+    svkTime:
+      Result := 'TimeOnly';
     svkDateTime:
       Result := 'DateTimeOffset';
+    svkGuid:
+      Result := 'Guid';
+    svkUri:
+      Result := 'Uri';
     svkBytes:
       Result := 'byte';
   else

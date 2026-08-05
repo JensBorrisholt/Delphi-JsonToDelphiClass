@@ -9,6 +9,7 @@ uses
   Pkg.Json.Syntax.CSharp in 'Syntax\Pkg.Json.Syntax.CSharp.pas',
   Pkg.Json.GeneratorGUI.Visualizer in '..\Components\Pkg.Json.GeneratorGUI.Visualizer.pas',
   Pkg.Json.GeneratorGUI.DemoProject in '..\Components\Pkg.Json.GeneratorGUI.DemoProject.pas',
+  Pkg.Json.GeneratorGUI.DemoData in '..\Components\Pkg.Json.GeneratorGUI.DemoData.pas',
   Pkg.Json.GeneratorGUI.UpdateForm in '..\Components\Pkg.Json.GeneratorGUI.UpdateForm.pas' {UpdateForm},
   Pkg.Json.GeneratorGUI.GitHub in '..\Components\Pkg.Json.GeneratorGUI.GitHub.pas';
 

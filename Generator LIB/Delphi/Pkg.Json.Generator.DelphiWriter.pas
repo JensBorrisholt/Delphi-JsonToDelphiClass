@@ -21,6 +21,7 @@ type
     function FieldType(AField: TGeneratorField): string;
     function HasArrays(AClass: TGeneratorClass): Boolean;
     function HasComplexFields(AClass: TGeneratorClass): Boolean;
+    function HasSemanticKind(AModel: TGeneratorModel; AKind: TSemanticValueKind): Boolean;
     function JsonNameAttribute(AField: TGeneratorField): string;
     function ListStorageType(AField: TGeneratorField): string;
     function ListType(AField: TGeneratorField): string;
@@ -75,7 +76,7 @@ end;
 
 function TDelphiUnitWriter.DateAttribute(AField: TGeneratorField): string;
 begin
-  if FOptions.SuppressZeroDate and (AField.DataType.SemanticKind = svkDateTime) then
+  if FOptions.SuppressZeroDate and (AField.DataType.SemanticKind in [svkDate, svkDateTime]) then
     Result := 'SuppressZero'
   else
     Result := '';
@@ -106,8 +107,16 @@ begin
       Result := 'Boolean';
     svkFloat:
       Result := 'Double';
+    svkDate:
+      Result := 'TDate';
+    svkTime:
+      Result := 'TTime';
     svkDateTime:
       Result := 'TDateTime';
+    svkGuid:
+      Result := 'TGUID';
+    svkUri:
+      Result := 'TURI';
     svkBytes:
       Result := 'Byte';
     svkInteger:
@@ -143,6 +152,19 @@ begin
   for Field in AClass.Fields do
     if Field.DataType.SemanticKind = svkObject then
       Exit(True);
+
+  Result := False;
+end;
+
+function TDelphiUnitWriter.HasSemanticKind(AModel: TGeneratorModel; AKind: TSemanticValueKind): Boolean;
+var
+  GeneratorClass: TGeneratorClass;
+  Field: TGeneratorField;
+begin
+  for GeneratorClass in AModel.Classes do
+    for Field in GeneratorClass.Fields do
+      if (Field.DataType.LeafType <> nil) and (Field.DataType.LeafType.SemanticKind = AKind) then
+        Exit(True);
 
   Result := False;
 end;
@@ -412,7 +434,10 @@ begin
     Lines.Add('interface');
     Lines.Add('');
     Lines.Add('uses');
-    Lines.Add('  Pkg.Json.DTO, System.Generics.Collections, REST.Json.Types;');
+    if HasSemanticKind(AModel, svkUri) then
+      Lines.Add('  Pkg.Json.DTO, System.Generics.Collections, System.Net.URLClient, REST.Json.Types;')
+    else
+      Lines.Add('  Pkg.Json.DTO, System.Generics.Collections, REST.Json.Types;');
     Lines.Add('');
     Lines.Add('{$M+}');
     Lines.Add('');

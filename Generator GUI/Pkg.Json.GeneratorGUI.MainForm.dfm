@@ -110,6 +110,47 @@ object MainForm: TMainForm
       Caption = 'JSON structure'
       Visible = False
     end
+    object pnlDemoData: TPanel
+      Left = 12
+      Top = 24
+      Width = 220
+      Height = 582
+      Align = alLeft
+      BevelOuter = bvNone
+      TabOrder = 3
+      Visible = False
+      object lblDemoData: TLabel
+        Left = 0
+        Top = 0
+        Width = 220
+        Height = 23
+        Align = alTop
+        Caption = 'Demo data'
+        Layout = tlCenter
+      end
+      object lstDemoData: TListView
+        Left = 0
+        Top = 23
+        Width = 220
+        Height = 559
+        Align = alClient
+        Columns = <>
+        HideSelection = False
+        ReadOnly = True
+        RowSelect = True
+        TabOrder = 0
+        ViewStyle = vsList
+        OnSelectItem = lstDemoDataSelectItem
+      end
+    end
+    object SplitterDemoData: TSplitter
+      Left = 232
+      Top = 24
+      Width = 8
+      Height = 582
+      Beveled = True
+      Visible = False
+    end
     object Splitter: TSplitter
       Left = 700
       Top = 24
@@ -235,6 +276,10 @@ object MainForm: TMainForm
         Action = actClassVisualizer
         AutoCheck = True
       end
+      object miDemoData: TMenuItem
+        Action = actDemoData
+        AutoCheck = True
+      end
     end
     object miConvert: TMenuItem
       Caption = '&Convert'
@@ -296,6 +341,11 @@ object MainForm: TMainForm
       AutoCheck = True
       Caption = 'Class &Visualizer'
       OnExecute = actClassVisualizerExecute
+    end
+    object actDemoData: TAction
+      AutoCheck = True
+      Caption = '&Demo Data'
+      OnExecute = actDemoDataExecute
     end
     object actDelphiUnit: TAction
       AutoCheck = True

@@ -23,6 +23,7 @@ type
     actMinifyJson: TAction;
     actDemoProject: TAction;
     actCSharpSource: TAction;
+    actDemoData: TAction;
     btnConvert: TButton;
     btnFormatJson: TButton;
     edtClassName: TEdit;
@@ -51,6 +52,7 @@ type
     miMinifyJson: TMenuItem;
     miDemoProject: TMenuItem;
     miCSharpSource: TMenuItem;
+    miDemoData: TMenuItem;
     OpenDialog: TOpenDialog;
     pnlNames: TPanel;
     pnlWorkspace: TPanel;
@@ -58,8 +60,12 @@ type
     SaveDialog: TSaveDialog;
     Splitter: TSplitter;
     SplitterTree: TSplitter;
+    SplitterDemoData: TSplitter;
     StatusBar: TStatusBar;
     treeJson: TTreeView;
+    pnlDemoData: TPanel;
+    lblDemoData: TLabel;
+    lstDemoData: TListView;
     procedure actConvertExecute(Sender: TObject);
     procedure actExitExecute(Sender: TObject);
     procedure actFormatJsonExecute(Sender: TObject);
@@ -67,12 +73,14 @@ type
     procedure actSaveAsExecute(Sender: TObject);
     procedure actSettingsExecute(Sender: TObject);
     procedure actClassVisualizerExecute(Sender: TObject);
+    procedure actDemoDataExecute(Sender: TObject);
     procedure actOutputToggleExecute(Sender: TObject);
     procedure ActionListUpdate(Action: TBasicAction; var Handled: Boolean);
     procedure edtClassNameChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure lblGitHubClick(Sender: TObject);
+    procedure lstDemoDataSelectItem(Sender: TObject; Item: TListItem; Selected: Boolean);
     procedure memJsonChange(Sender: TObject);
   private
     FJsonHighlighter: IIncrementalSyntaxHighlighter;
@@ -96,6 +104,7 @@ type
     procedure HighlightCSharp;
     procedure UpdateOutputCaption;
     procedure SetStatus(const AText: string);
+    procedure RefreshDemoData;
   end;
 
 var
@@ -109,7 +118,7 @@ uses
   Pkg.Json.Lib.JSONConverter,
   Pkg.Json.GeneratorGUI.SettingsForm, Pkg.Json.Utils,
   Pkg.Json.GeneratorGUI.UpdateForm, Pkg.Json.GeneratorGUI.Visualizer,
-  Pkg.Json.GeneratorGUI.DemoProject,
+  Pkg.Json.GeneratorGUI.DemoProject, Pkg.Json.GeneratorGUI.DemoData,
   Pkg.Json.Syntax.RichEdit,
   Pkg.Json.Syntax.Types;
 
@@ -247,6 +256,15 @@ begin
   FCSharpTab.TabVisible := actCSharpSource.Checked;
   FBsonTab.TabVisible := actBSON.Checked;
   FMinifyTab.TabVisible := actMinifyJson.Checked;
+end;
+
+procedure TMainForm.actDemoDataExecute(Sender: TObject);
+begin
+  pnlDemoData.Visible := actDemoData.Checked;
+  SplitterDemoData.Visible := actDemoData.Checked;
+
+  if actDemoData.Checked then
+    RefreshDemoData;
 end;
 
 procedure TMainForm.actExitExecute(Sender: TObject);
@@ -486,6 +504,57 @@ begin
 
   if FJsonHighlighter <> nil then
     FJsonHighlighter.TextChanged;
+end;
+
+procedure TMainForm.RefreshDemoData;
+var
+  FileName: string;
+  Item: TListItem;
+begin
+  lstDemoData.Items.BeginUpdate;
+  try
+    lstDemoData.Items.Clear;
+    for FileName in TDemoDataRepository.FileNames do
+    begin
+      Item := lstDemoData.Items.Add;
+      Item.Caption := FileName;
+    end;
+  finally
+    lstDemoData.Items.EndUpdate;
+  end;
+
+  if lstDemoData.Items.Count = 0 then
+  begin
+    SetStatus('The Demo Data directory could not be found or contains no JSON files.');
+    Exit;
+  end;
+
+  lstDemoData.Items[0].Selected := True;
+  lstDemoData.Items[0].Focused := True;
+end;
+
+procedure TMainForm.lstDemoDataSelectItem(Sender: TObject; Item: TListItem; Selected: Boolean);
+var
+  ChangeHandler: TNotifyEvent;
+begin
+  if not Selected or (Item = nil) then
+    Exit;
+
+  ChangeHandler := memJson.OnChange;
+  memJson.OnChange := nil;
+  memJson.Lines.BeginUpdate;
+  try
+    memJson.Text := TDemoDataRepository.Load(Item.Caption);
+    if FormatJsonInput(False) then
+      SetStatus(Format('Loaded demo data: %s', [Item.Caption]))
+    else
+      SetStatus(Format('Demo data is not valid JSON: %s', [Item.Caption]));
+  finally
+    memJson.Lines.EndUpdate;
+    memJson.OnChange := ChangeHandler;
+  end;
+
+  ClearOutput;
 end;
 
 procedure TMainForm.SetStatus(const AText: string);

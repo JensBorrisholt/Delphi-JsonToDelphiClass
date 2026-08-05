@@ -95,8 +95,9 @@
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=4.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=4.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=4.2.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=4.0.0.0;Comments=</VerInfo_Keys>
         <VerInfo_MajorVer>4</VerInfo_MajorVer>
+        <VerInfo_MinorVer>2</VerInfo_MinorVer>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
@@ -114,6 +115,7 @@
         <DCCReference Include="Syntax\Pkg.Json.Syntax.CSharp.pas"/>
         <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.Visualizer.pas"/>
         <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.DemoProject.pas"/>
+        <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.DemoData.pas"/>
         <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.UpdateForm.pas">
             <Form>UpdateForm</Form>
         </DCCReference>
