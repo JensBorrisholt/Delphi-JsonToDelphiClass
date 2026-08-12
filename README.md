@@ -17,11 +17,24 @@ Delphi-JsonToDelphiClass
   validation, builder and both the Delphi and C# writers. The test suite now
   includes console, GUI, smoke and legacy-compatibility runners.
 * Redesigned the Generator GUI main form and settings dialog.
+
+  [![JsonToDelphiClass 4.2 main form](Images/Mainform_4.2.png)](https://github.com/JensBorrisholt/Delphi-JsonToDelphiClass/blob/Development/Bugfixes/Images/Mainform_4.2.png)
+
 * Added an integrated demo-data browser that can load the supplied JSON samples
   directly into the editor.
 * Added a JSON class visualizer that refreshes as the input changes.
 * Demo-project generation now supports selecting the target application
   framework and extracts the required runtime files from the embedded template.
+
+### Requirements ###
+
+The Generator GUI requires the `VCL.Ribbon` package. Install it from Delphi's
+GetIt Package Manager before opening or compiling the project:
+
+1. Open **Tools > GetIt Package Manager** in the Delphi IDE.
+2. Search for **VCL Ribbon**.
+3. Select the package and click **Install**.
+4. Restart the Delphi IDE if requested, then reopen the project.
 
 ### Fixes ###
 
