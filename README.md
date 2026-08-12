@@ -1,6 +1,38 @@
 Delphi-JsonToDelphiClass
 ========================
 
+## Fixes & Features: 12th August 2026 ##
+
+### Features ###
+
+* Added semantic detection and language-specific code generation for additional
+  JSON string types:
+  * ISO dates map to `TDate` in Delphi and `DateOnly` in C#.
+  * ISO times map to `TTime` in Delphi and `TimeOnly` in C#.
+  * GUID values map to `TGUID` in Delphi and `Guid` in C#.
+  * URI values map to `TURI` in Delphi and `Uri` in C#.
+* Added demo JSON files covering dates, times, GUIDs, URIs, semantic types and
+  two-dimensional arrays.
+* Added extensive automated test coverage for the shared generator model,
+  validation, builder and both the Delphi and C# writers. The test suite now
+  includes console, GUI, smoke and legacy-compatibility runners.
+* Redesigned the Generator GUI main form and settings dialog.
+* Added an integrated demo-data browser that can load the supplied JSON samples
+  directly into the editor.
+* Added a JSON class visualizer that refreshes as the input changes.
+* Demo-project generation now supports selecting the target application
+  framework and extracts the required runtime files from the embedded template.
+
+### Fixes ###
+
+* Improved semantic type inference for scalar values and nested arrays while
+  preserving the language-neutral generator model.
+* Delphi output now includes `System.Net.URLClient` only when generated types
+  require `TURI`.
+* Date-only values now participate in the existing zero-date suppression logic.
+* Updated the GUI layout, resizing and splitter handling for the redesigned
+  main window.
+
 ## Fixes & Features: 05th August 2026 ##
 
 ### Features ###
