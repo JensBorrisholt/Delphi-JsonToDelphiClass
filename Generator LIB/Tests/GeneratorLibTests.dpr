@@ -4,7 +4,6 @@ program GeneratorLibTests;
 
 uses
   System.SysUtils,
-  System.Console,
   DUnitX.TestFramework,
   Tests.ConsoleLogger in 'Runner\Tests.ConsoleLogger.pas',
   Tests.Generator.Core in 'Core\Tests.Generator.Core.pas',
@@ -26,5 +25,4 @@ begin
   Results := Runner.Execute;
   if not Results.AllPassed then
     ExitCode := EXIT_ERRORS;
-  Console.ReadLine;
 end.

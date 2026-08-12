@@ -1,5 +1,7 @@
 program JsonToDelphiClass;
 
+{$R 'DemoTemplate.res' '..\Components\DemoTemplate.rc'}
+
 uses
   Vcl.Forms,
   Pkg.Json.GeneratorGUI.SettingsForm in 'Pkg.Json.GeneratorGUI.SettingsForm.pas' {SettingsForm},

@@ -9,12 +9,10 @@ uses
 type
   TSyntaxRichEditRenderer = class
   private
-    class procedure ApplyTokenStyle(const Editor: TRichEdit;
-      const AStart, ALength: Integer; const Kind: TSyntaxTokenKind); static;
+    class procedure ApplyTokenStyle(const Editor: TRichEdit; const AStart, ALength: Integer; const Kind: TSyntaxTokenKind); static;
   public
     class procedure Highlight(const Editor: TRichEdit; const Language: TSyntaxLanguage); static;
-    class procedure HighlightLine(const Editor: TRichEdit;
-      const Language: TSyntaxLanguage; const LineIndex: Integer); static;
+    class procedure HighlightLine(const Editor: TRichEdit; const Language: TSyntaxLanguage; const LineIndex: Integer); static;
   end;
 
 implementation
@@ -24,8 +22,7 @@ uses
   Winapi.Windows,
   Pkg.Json.Syntax.Factory;
 
-class procedure TSyntaxRichEditRenderer.ApplyTokenStyle(const Editor: TRichEdit;
-  const AStart, ALength: Integer; const Kind: TSyntaxTokenKind);
+class procedure TSyntaxRichEditRenderer.ApplyTokenStyle(const Editor: TRichEdit; const AStart, ALength: Integer; const Kind: TSyntaxTokenKind);
 var
   CharFormat: TCharFormat2;
   CharRange: TCharRange;
@@ -61,8 +58,7 @@ begin
   else
     CharRange.cpMax := AStart + ALength;
   SendMessage(Editor.Handle, EM_EXSETSEL, 0, LPARAM(@CharRange));
-  SendMessage(Editor.Handle, EM_SETCHARFORMAT, SCF_SELECTION,
-    LPARAM(@CharFormat));
+  SendMessage(Editor.Handle, EM_SETCHARFORMAT, SCF_SELECTION, LPARAM(@CharFormat));
 end;
 
 class procedure TSyntaxRichEditRenderer.Highlight(const Editor: TRichEdit; const Language: TSyntaxLanguage);
@@ -92,11 +88,9 @@ begin
       Column := 0;
       for Token in Lines[LineIndex] do
       begin
-        if not (Token.Kind in [tkText, tkSymbol]) then
-        begin
-          ApplyTokenStyle(Editor, LineStart + Column, Length(Token.Text),
-            Token.Kind);
-        end;
+        if not(Token.Kind in [tkText, tkSymbol]) then
+          ApplyTokenStyle(Editor, LineStart + Column, Length(Token.Text), Token.Kind);
+
         Inc(Column, Length(Token.Text));
       end;
     end;
@@ -110,8 +104,7 @@ begin
   end;
 end;
 
-class procedure TSyntaxRichEditRenderer.HighlightLine(const Editor: TRichEdit;
-  const Language: TSyntaxLanguage; const LineIndex: Integer);
+class procedure TSyntaxRichEditRenderer.HighlightLine(const Editor: TRichEdit; const Language: TSyntaxLanguage; const LineIndex: Integer);
 var
   Column, LineLength, LineStart, SavedLength, SavedStart: Integer;
   Lines: TSyntaxLines;
@@ -120,14 +113,15 @@ var
 begin
   if (LineIndex < 0) or (LineIndex >= Editor.Lines.Count) then
     Exit;
+
   SavedStart := Editor.SelStart;
   SavedLength := Editor.SelLength;
-  Lines := TSyntaxHighlighterFactory.GetHighlighter(Language).Tokenize(
-    Editor.Lines[LineIndex]);
+  Lines := TSyntaxHighlighterFactory.GetHighlighter(Language).Tokenize(Editor.Lines[LineIndex]);
   LineStart := Editor.Perform(EM_LINEINDEX, LineIndex, 0);
   LineLength := Length(Editor.Lines[LineIndex]);
   SendMessage(Editor.Handle, WM_SETREDRAW, 0, 0);
   SavedEventMask := Editor.Perform(EM_SETEVENTMASK, 0, 0);
+
   try
     ApplyTokenStyle(Editor, LineStart, LineLength, tkText);
     if Length(Lines) > 0 then
@@ -135,9 +129,8 @@ begin
       Column := 0;
       for Token in Lines[0] do
       begin
-        if not (Token.Kind in [tkText, tkSymbol]) then
-          ApplyTokenStyle(Editor, LineStart + Column, Length(Token.Text),
-            Token.Kind);
+        if not(Token.Kind in [tkText, tkSymbol]) then
+          ApplyTokenStyle(Editor, LineStart + Column, Length(Token.Text), Token.Kind);
         Inc(Column, Length(Token.Text));
       end;
     end;

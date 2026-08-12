@@ -1,4 +1,4 @@
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{77F297F4-A177-44FB-A215-7E6704FFC1A8}</ProjectGuid>
         <MainSource>JsonToDelphiClass.dpr</MainSource>
@@ -103,6 +103,9 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
+        <RcCompile Include="..\Components\DemoTemplate.rc">
+            <Form>DemoTemplate.res</Form>
+        </RcCompile>
         <DCCReference Include="Pkg.Json.GeneratorGUI.SettingsForm.pas">
             <Form>SettingsForm</Form>
         </DCCReference>
