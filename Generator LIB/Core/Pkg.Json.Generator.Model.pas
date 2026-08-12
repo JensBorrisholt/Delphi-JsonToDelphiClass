@@ -10,7 +10,8 @@ type
 
   TJsonValueKind = (jvkUnknown, jvkNull, jvkObject, jvkArray, jvkString, jvkBoolean, jvkNumber);
 
-  TSemanticValueKind = (svkUnknown, svkObject, svkString, svkBoolean, svkInteger, svkInteger64, svkFloat, svkDateTime, svkBytes);
+  TSemanticValueKind = (svkUnknown, svkObject, svkString, svkBoolean, svkInteger, svkInteger64, svkFloat,
+    svkDate, svkTime, svkDateTime, svkGuid, svkUri, svkBytes);
 
   TGeneratorType = class
   private

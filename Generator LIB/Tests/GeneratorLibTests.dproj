@@ -1,10 +1,10 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
-        <ProjectGuid>{6BBCC9E7-79D5-46C7-86EA-AF36DE2AA5B9}</ProjectGuid>
-        <MainSource>GeneratorSmokeTests.dpr</MainSource>
+        <ProjectGuid>{A5B19F4A-71F0-4D7B-99F0-DB871934D1F2}</ProjectGuid>
+        <MainSource>GeneratorLibTests.dpr</MainSource>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
-        <ProjectName Condition="'$(ProjectName)'==''">GeneratorSmokeTests</ProjectName>
+        <ProjectName Condition="'$(ProjectName)'==''">GeneratorLibTests</ProjectName>
         <TargetedPlatforms>1</TargetedPlatforms>
         <AppType>Console</AppType>
         <FrameworkType>None</FrameworkType>
@@ -62,7 +62,7 @@
         <DCC_N>false</DCC_N>
         <DCC_S>false</DCC_S>
         <DCC_ImageBase>00400000</DCC_ImageBase>
-        <SanitizedProjectName>GeneratorSmokeTests</SanitizedProjectName>
+        <SanitizedProjectName>GeneratorLibTests</SanitizedProjectName>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=;CFBundleName=</VerInfo_Keys>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
@@ -70,7 +70,7 @@
         <Icns_MainIcns>$(BDS)\bin\delphi_PROJECTICNS.icns</Icns_MainIcns>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_FrameworkPath>..\..\Lib;..\..\Generator LIB;$(DCC_FrameworkPath)</DCC_FrameworkPath>
-        <DCC_UnitSearchPath>..\..\Lib;..\..\Components;..\Core;..\Delphi;..\CSharp;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>..\..\Lib;..\..\Components;..\Core;..\Delphi;..\CSharp;Runner;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Android)'!=''">
@@ -157,22 +157,26 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="..\Delphi\Pkg.Json.Generator.Delphi.pas"/>
-        <DCCReference Include="..\Core\Pkg.Json.Generator.Builder.pas"/>
-        <DCCReference Include="..\Core\Pkg.Json.Generator.Settings.pas"/>
+        <DCCReference Include="Runner\Tests.ConsoleLogger.pas"/>
+        <DCCReference Include="Core\Tests.Generator.Core.pas"/>
+        <DCCReference Include="Core\Tests.Generator.Model.pas"/>
+        <DCCReference Include="Core\Tests.Generator.Validation.pas"/>
+        <DCCReference Include="Core\Tests.Generator.Builder.pas"/>
+        <DCCReference Include="Delphi\Tests.Generator.Delphi.pas"/>
+        <DCCReference Include="CSharp\Tests.Generator.CSharp.pas"/>
+        <DCCReference Include="..\Core\Pkg.Json.Generator.Model.pas"/>
         <DCCReference Include="..\Core\Pkg.Json.Generator.Errors.pas"/>
-        <DCCReference Include="..\Delphi\Pkg.Json.Generator.DelphiWriter.pas"/>
+        <DCCReference Include="..\Core\Pkg.Json.Generator.Settings.pas"/>
+        <DCCReference Include="..\Core\Pkg.Json.Generator.Validation.pas"/>
+        <DCCReference Include="..\Core\Pkg.Json.Generator.Builder.pas"/>
+        <DCCReference Include="..\Delphi\Pkg.Json.Generator.Delphi.pas"/>
         <DCCReference Include="..\Delphi\Pkg.Json.Generator.DelphiNaming.pas"/>
         <DCCReference Include="..\Delphi\Pkg.Json.Generator.DelphiSettings.pas"/>
+        <DCCReference Include="..\Delphi\Pkg.Json.Generator.DelphiWriter.pas"/>
         <DCCReference Include="..\CSharp\Pkg.Json.Generator.CSharp.pas"/>
         <DCCReference Include="..\CSharp\Pkg.Json.Generator.CSharpNaming.pas"/>
         <DCCReference Include="..\CSharp\Pkg.Json.Generator.CSharpSettings.pas"/>
         <DCCReference Include="..\CSharp\Pkg.Json.Generator.CSharpWriter.pas"/>
-        <DCCReference Include="..\Core\Pkg.Json.Generator.Model.pas"/>
-        <DCCReference Include="GeneratorSmokeTestCases.pas"/>
-        <DCCReference Include="..\..\Components\Pkg.Json.GeneratorGUI.DemoData.pas"/>
-        <DCCReference Include="TestConsoleRunner.pas"/>
-        <DCCReference Include="..\..\Components\System.Console.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
@@ -193,7 +197,7 @@
         <BorlandProject>
             <Delphi.Personality>
                 <Source>
-                    <Source Name="MainSource">GeneratorSmokeTests.dpr</Source>
+                    <Source Name="MainSource">GeneratorLibTests.dpr</Source>
                 </Source>
                 <Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dcloffice2k290.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>

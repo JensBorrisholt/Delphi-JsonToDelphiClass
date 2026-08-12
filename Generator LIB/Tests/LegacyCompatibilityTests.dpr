@@ -3,13 +3,15 @@ program LegacyCompatibilityTests;
 {$APPTYPE CONSOLE}
 
 uses
-  System.Classes, System.SysUtils,
+  System.Classes,
+  System.SysUtils,
   Pkg.Json.Mapper,
   Pkg.Json.Generator.Delphi in '..\Delphi\Pkg.Json.Generator.Delphi.pas',
   Pkg.Json.Generator.Builder in '..\Core\Pkg.Json.Generator.Builder.pas',
   Pkg.Json.Generator.DelphiWriter in '..\Delphi\Pkg.Json.Generator.DelphiWriter.pas',
   Pkg.Json.Generator.Model in '..\Core\Pkg.Json.Generator.Model.pas',
-  Pkg.Json.Generator.DelphiSettings in '..\Delphi\Pkg.Json.Generator.DelphiSettings.pas';
+  Pkg.Json.Generator.DelphiSettings in '..\Delphi\Pkg.Json.Generator.DelphiSettings.pas',
+  TestConsoleRunner in 'TestConsoleRunner.pas';
 
 function NormalizeWhitespace(const ASource: string): string;
 var
@@ -45,32 +47,41 @@ begin
     LegacySource := Legacy.Parse(AJson).GenerateUnit;
     RefactoredSource := Refactored.Parse(AJson).GenerateUnit;
     if NormalizeWhitespace(LegacySource) <> NormalizeWhitespace(RefactoredSource) then
-    begin
-      Writeln('--- Legacy');
-      Writeln(LegacySource);
-      Writeln('--- Refactored');
-      Writeln(RefactoredSource);
       raise Exception.CreateFmt('Generated source differs for %s', [ADescription]);
-    end;
   finally
     Refactored.Free;
     Legacy.Free;
   end;
 end;
 
+procedure TestScalarFields;
 begin
-  try
-    Compare('{"name":"Ada","age":42,"enabled":true}', 'scalar fields');
-    Compare('{"customer":{"name":"Ada","address":{"city":"London"}}}',
-      'nested objects');
-    Compare('{"items":[{"sku":"A","quantity":1},{"sku":"B","quantity":2}]}',
-      'object arrays');
-    Writeln('Legacy compatibility tests passed.');
-  except
-    on E: Exception do
-    begin
-      Writeln(E.ClassName + ': ' + E.Message);
-      Halt(1);
-    end;
-  end;
+  Compare('{"name":"Ada","age":42,"enabled":true}', 'scalar fields');
+end;
+
+procedure TestNestedObjects;
+begin
+  Compare('{"customer":{"name":"Ada","address":{"city":"London"}}}', 'nested objects');
+end;
+
+procedure TestObjectArrays;
+begin
+  Compare('{"items":[{"sku":"A","quantity":1},{"sku":"B","quantity":2}]}', 'object arrays');
+end;
+
+function GetTests: TArray<TTestCase>;
+begin
+  Result := [
+    TTestCase.Create('Scalar fields', TestScalarFields),
+    TTestCase.Create('Nested objects', TestNestedObjects),
+    TTestCase.Create('Object arrays', TestObjectArrays)
+  ];
+end;
+
+var
+  Failed: Integer;
+begin
+  Failed := RunTests('Legacy Compatibility Tests', GetTests);
+  if Failed > 0 then
+    Halt(1);
 end.

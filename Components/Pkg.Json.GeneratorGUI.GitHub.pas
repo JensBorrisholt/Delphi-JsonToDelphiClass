@@ -6,7 +6,7 @@ uses
   System.SysUtils;
 
 const
-  ProgramVersion = '4.1';
+  ProgramVersion = '4.2';
   ProgramUrl = 'https://github.com/JensBorrisholt/Delphi-JsonToDelphiClass';
 
 type

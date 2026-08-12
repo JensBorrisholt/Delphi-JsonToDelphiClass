@@ -3,14 +3,27 @@ unit Pkg.Json.GeneratorGUI.MainForm;
 interface
 
 uses
-  System.Classes, System.SysUtils, System.Actions, System.UITypes,
-  Vcl.ActnList, Vcl.ComCtrls, Vcl.Controls, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Forms, Vcl.Menus, Vcl.StdCtrls,
+  System.Classes, System.SysUtils, System.Actions, System.UITypes, System.IOUtils,
+  Winapi.Messages, Winapi.Windows,
+  Vcl.ActnList, Vcl.ActnMan, Vcl.ComCtrls, Vcl.Controls, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.Forms, Vcl.Graphics,
+  Vcl.ImgList, Vcl.Ribbon, Vcl.RibbonLunaStyleActnCtrls, Vcl.StdCtrls,
   Pkg.Json.GeneratorGUI.GitHub, Pkg.Json.Syntax.Incremental,
-  Pkg.Json.Generator.DelphiSettings, Pkg.Json.Generator.CSharpSettings;
+  Pkg.Json.Generator.DelphiSettings, Pkg.Json.Generator.CSharpSettings, System.ImageList, Vcl.ToolWin, Vcl.ActnCtrls;
 
 type
   TMainForm = class(TForm)
-    ActionList: TActionList;
+    ActionList: TActionManager;
+    Ribbon: TRibbon;
+    RibbonPageHome: TRibbonPage;
+    RibbonGroupFile: TRibbonGroup;
+    RibbonGroupDelphi: TRibbonGroup;
+    RibbonGroupCSharp: TRibbonGroup;
+    RibbonGroupJson: TRibbonGroup;
+    RibbonGroupGenerate: TRibbonGroup;
+    RibbonGroupSettings: TRibbonGroup;
+    RibbonGroupPanels: TRibbonGroup;
+    SmallImages: TImageList;
+    LargeImages: TImageList;
     actConvert: TAction;
     actExit: TAction;
     actFormatJson: TAction;
@@ -23,8 +36,7 @@ type
     actMinifyJson: TAction;
     actDemoProject: TAction;
     actCSharpSource: TAction;
-    btnConvert: TButton;
-    btnFormatJson: TButton;
+    actDemoData: TAction;
     edtClassName: TEdit;
     edtUnitName: TEdit;
     lblClassName: TLabel;
@@ -33,24 +45,16 @@ type
     lblStructure: TLabel;
     lblUnitName: TLabel;
     lblGitHub: TLabel;
-    MainMenu: TMainMenu;
     memJson: TRichEdit;
     memOutput: TRichEdit;
-    miExit: TMenuItem;
-    miFormatJson: TMenuItem;
-    miFile: TMenuItem;
-    miOpen: TMenuItem;
-    miOptions: TMenuItem;
-    miSaveAs: TMenuItem;
-    miSettings: TMenuItem;
-    miView: TMenuItem;
-    miVisualizer: TMenuItem;
-    miConvert: TMenuItem;
-    miBSON: TMenuItem;
-    miDelphiUnit: TMenuItem;
-    miMinifyJson: TMenuItem;
-    miDemoProject: TMenuItem;
-    miCSharpSource: TMenuItem;
+    FOutputPages: TPageControl;
+    FDelphiTab: TTabSheet;
+    FCSharpTab: TTabSheet;
+    FBsonTab: TTabSheet;
+    FMinifyTab: TTabSheet;
+    FCSharpOutput: TRichEdit;
+    FBsonOutput: TRichEdit;
+    FMinifyOutput: TRichEdit;
     OpenDialog: TOpenDialog;
     pnlNames: TPanel;
     pnlWorkspace: TPanel;
@@ -58,8 +62,12 @@ type
     SaveDialog: TSaveDialog;
     Splitter: TSplitter;
     SplitterTree: TSplitter;
+    SplitterDemoData: TSplitter;
     StatusBar: TStatusBar;
     treeJson: TTreeView;
+    pnlDemoData: TPanel;
+    lblDemoData: TLabel;
+    lstDemoData: TListView;
     procedure actConvertExecute(Sender: TObject);
     procedure actExitExecute(Sender: TObject);
     procedure actFormatJsonExecute(Sender: TObject);
@@ -67,28 +75,23 @@ type
     procedure actSaveAsExecute(Sender: TObject);
     procedure actSettingsExecute(Sender: TObject);
     procedure actClassVisualizerExecute(Sender: TObject);
+    procedure actDemoDataExecute(Sender: TObject);
     procedure actOutputToggleExecute(Sender: TObject);
     procedure ActionListUpdate(Action: TBasicAction; var Handled: Boolean);
     procedure edtClassNameChange(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure lblGitHubClick(Sender: TObject);
+    procedure lstDemoDataSelectItem(Sender: TObject; Item: TListItem; Selected: Boolean);
     procedure memJsonChange(Sender: TObject);
+    procedure FormResize(Sender: TObject);
+    procedure SplitterMoved(Sender: TObject);
   private
     FJsonHighlighter: IIncrementalSyntaxHighlighter;
     FUpdateRequest: IUpdateRequest;
     FRelease: TGitHubRelease;
-    FOutputPages: TPageControl;
-    FDelphiTab: TTabSheet;
-    FBsonTab: TTabSheet;
-    FMinifyTab: TTabSheet;
-    FCSharpTab: TTabSheet;
-    FBsonOutput: TRichEdit;
-    FMinifyOutput: TRichEdit;
-    FCSharpOutput: TRichEdit;
     FDelphiSettings: TDelphiSettings;
     FCSharpSettings: TCSharpSettings;
-    function CreateOutputTab(const ACaption: string; out ATab: TTabSheet): TRichEdit;
     function CurrentOutput(out AExtension: string): TRichEdit;
     procedure ClearOutput;
     function FormatJsonInput(const AShowError: Boolean): Boolean;
@@ -96,6 +99,8 @@ type
     procedure HighlightCSharp;
     procedure UpdateOutputCaption;
     procedure SetStatus(const AText: string);
+    procedure RefreshDemoData;
+    procedure RefreshClassVisualizer;
   end;
 
 var
@@ -104,12 +109,12 @@ var
 implementation
 
 uses
-  System.IOUtils, Winapi.Messages, Vcl.FileCtrl,
+  Vcl.FileCtrl,
   Pkg.Json.Generator.Delphi, Pkg.Json.Generator.CSharp, Pkg.Json.Generator.Errors,
   Pkg.Json.Lib.JSONConverter,
   Pkg.Json.GeneratorGUI.SettingsForm, Pkg.Json.Utils,
   Pkg.Json.GeneratorGUI.UpdateForm, Pkg.Json.GeneratorGUI.Visualizer,
-  Pkg.Json.GeneratorGUI.DemoProject,
+  Pkg.Json.GeneratorGUI.DemoProject, Pkg.Json.GeneratorGUI.DemoData,
   Pkg.Json.Syntax.RichEdit,
   Pkg.Json.Syntax.Types;
 
@@ -149,7 +154,6 @@ begin
       DelphiGenerator.RootClassName := Trim(edtClassName.Text);
       DelphiGenerator.DestinationUnitName := Trim(edtUnitName.Text);
       DelphiGenerator.Parse(memJson.Text);
-      TJsonModelVisualizer.Visualize(treeJson, DelphiGenerator.Model);
       DelphiSource := DelphiGenerator.GenerateUnit;
       GeneratedSomething := True;
     end;
@@ -164,8 +168,6 @@ begin
       CSharpGenerator.RootClassName := Trim(edtClassName.Text);
       CSharpGenerator.Parse(memJson.Text);
 
-      if DelphiGenerator = nil then
-        TJsonModelVisualizer.Visualize(treeJson, CSharpGenerator.Model);
 
       CSharpSource := CSharpGenerator.GenerateSource;
       GeneratedSomething := True;
@@ -249,6 +251,15 @@ begin
   FMinifyTab.TabVisible := actMinifyJson.Checked;
 end;
 
+procedure TMainForm.actDemoDataExecute(Sender: TObject);
+begin
+  pnlDemoData.Visible := actDemoData.Checked;
+  SplitterDemoData.Visible := actDemoData.Checked;
+
+  if actDemoData.Checked then
+    RefreshDemoData;
+end;
+
 procedure TMainForm.actExitExecute(Sender: TObject);
 begin
   Close;
@@ -284,6 +295,8 @@ begin
     memJson.Lines.EndUpdate;
     memJson.OnChange := ChangeHandler;
   end;
+
+  RefreshClassVisualizer;
 end;
 
 procedure TMainForm.actSaveAsExecute(Sender: TObject);
@@ -325,22 +338,8 @@ begin
   if FCSharpOutput <> nil then
     FCSharpOutput.Clear;
 
-  treeJson.Items.Clear;
 end;
 
-function TMainForm.CreateOutputTab(const ACaption: string; out ATab: TTabSheet): TRichEdit;
-begin
-  ATab := TTabSheet.Create(Self);
-  ATab.PageControl := FOutputPages;
-  ATab.Caption := ACaption;
-  Result := TRichEdit.Create(Self);
-  Result.Parent := ATab;
-  Result.Align := alClient;
-  Result.ReadOnly := True;
-  Result.ScrollBars := ssBoth;
-  Result.WordWrap := False;
-  Result.Font.Assign(memOutput.Font);
-end;
 
 function TMainForm.CurrentOutput(out AExtension: string): TRichEdit;
 begin
@@ -376,6 +375,9 @@ begin
   treeJson.Visible := actClassVisualizer.Checked;
   SplitterTree.Visible := actClassVisualizer.Checked;
   lblStructure.Visible := actClassVisualizer.Checked;
+
+  if actClassVisualizer.Checked then
+    RefreshClassVisualizer;
 end;
 
 procedure TMainForm.HighlightCSharp;
@@ -427,17 +429,6 @@ end;
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   FJsonHighlighter := TIncrementalSyntaxHighlighter.Create(memJson, slJson);
-  FOutputPages := TPageControl.Create(Self);
-  FOutputPages.Parent := pnlWorkspace;
-  FOutputPages.Align := alClient;
-  FDelphiTab := TTabSheet.Create(Self);
-  FDelphiTab.PageControl := FOutputPages;
-  FDelphiTab.Caption := 'Delphi Unit';
-  memOutput.Parent := FDelphiTab;
-  memOutput.Align := alClient;
-  FBsonOutput := CreateOutputTab('BSON', FBsonTab);
-  FMinifyOutput := CreateOutputTab('Minify JSON', FMinifyTab);
-  FCSharpOutput := CreateOutputTab('C# Source', FCSharpTab);
   FDelphiSettings := TDelphiSettings.Create;
   FCSharpSettings := TCSharpSettings.Create;
   actOutputToggleExecute(nil);
@@ -465,6 +456,17 @@ begin
   FDelphiSettings.Free;
 end;
 
+procedure CenterComponent(aCenter: TControl; aCenterOver: TControl);
+begin
+  aCenter.Left := aCenterOver.Left + ((aCenterOver.Width - aCenter.Width) div 2);
+end;
+
+procedure TMainForm.FormResize(Sender: TObject);
+begin
+  CenterComponent(lblInput, memJson);
+
+end;
+
 procedure TMainForm.lblGitHubClick(Sender: TObject);
 begin
   if not FRelease.Valid then
@@ -486,11 +488,76 @@ begin
 
   if FJsonHighlighter <> nil then
     FJsonHighlighter.TextChanged;
+
+  RefreshClassVisualizer;
+end;
+
+procedure TMainForm.RefreshDemoData;
+var
+  FileName: string;
+  Item: TListItem;
+begin
+  lstDemoData.Items.BeginUpdate;
+  try
+    lstDemoData.Items.Clear;
+    for FileName in TDemoDataRepository.FileNames do
+    begin
+      Item := lstDemoData.Items.Add;
+      Item.Caption := FileName;
+    end;
+  finally
+    lstDemoData.Items.EndUpdate;
+  end;
+
+  if lstDemoData.Items.Count = 0 then
+  begin
+    SetStatus('The Demo Data directory could not be found or contains no JSON files.');
+    Exit;
+  end;
+
+  lstDemoData.Items[0].Selected := True;
+  lstDemoData.Items[0].Focused := True;
+end;
+
+procedure TMainForm.lstDemoDataSelectItem(Sender: TObject; Item: TListItem; Selected: Boolean);
+var
+  ChangeHandler: TNotifyEvent;
+begin
+  if not Selected or (Item = nil) then
+    Exit;
+
+  ChangeHandler := memJson.OnChange;
+  memJson.OnChange := nil;
+  memJson.Lines.BeginUpdate;
+  try
+    memJson.Text := TDemoDataRepository.Load(Item.Caption);
+    if FormatJsonInput(False) then
+      SetStatus(Format('Loaded demo data: %s', [Item.Caption]))
+    else
+      SetStatus(Format('Demo data is not valid JSON: %s', [Item.Caption]));
+  finally
+    memJson.Lines.EndUpdate;
+    memJson.OnChange := ChangeHandler;
+  end;
+
+  ClearOutput;
+  RefreshClassVisualizer;
+end;
+
+procedure TMainForm.RefreshClassVisualizer;
+begin
+  TJsonSourceVisualizer.Visualize(treeJson, memJson.Text);
+  CenterComponent(lblStructure, treeJson);
 end;
 
 procedure TMainForm.SetStatus(const AText: string);
 begin
   StatusBar.SimpleText := AText;
+end;
+
+procedure TMainForm.SplitterMoved(Sender: TObject);
+begin
+  CenterComponent(lblInput, memJson);
 end;
 
 end.

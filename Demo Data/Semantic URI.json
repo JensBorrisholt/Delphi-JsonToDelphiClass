@@ -1,0 +1,22 @@
+{
+  "homepage": "https://example.com",
+  "apiEndpoint": "https://api.example.com/v1/customers",
+  "contact": "mailto:demo@example.com",
+  "uris": [
+    "https://example.com/a",
+    "https://example.com/b",
+    "mailto:support@example.com"
+  ],
+  "uriMatrix": [
+    [
+      "https://example.com/a/1",
+      "https://example.com/a/2"
+    ],
+    [
+      "https://example.com/b/1",
+      "https://example.com/b/2"
+    ]
+  ],
+  "plainText": "example.com",
+  "relativePath": "/customers/42"
+}
