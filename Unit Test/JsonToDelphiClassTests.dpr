@@ -25,14 +25,14 @@ uses
   DUnitX.Loggers.Console,
   DUnitX.Loggers.Xml.NUnit,
   DUnitX.TestFramework,
-  TestPkg.TestTJSONName in 'TestPkg.TestTJSONName.pas',
-  Pkg.Json.JSONName in '..\Lib\Pkg.Json.JSONName.pas',
-  Pkg.Json.JsonValueHelper in '..\Lib\Pkg.Json.JsonValueHelper.pas',
-  TeskPkg.TestJsonValueHelper in 'TeskPkg.TestJsonValueHelper.pas',
-  TestPkg.PersonDTO in 'TestPkg.PersonDTO.pas',
-  TestPkg.TestJsonDTO in 'TestPkg.TestJsonDTO.pas',
-  TestPkg.SimpleDTO in 'TestPkg.SimpleDTO.pas',
-  TestPkg.TestSuppressZero in 'TestPkg.TestSuppressZero.pas';
+  Tests.Runtime.JSONName in 'Tests.Runtime.JSONName.pas',
+  JsonToDelphi.Runtime.JSONName in '..\Runtime\JsonToDelphi.Runtime.JSONName.pas',
+  JsonToDelphi.Runtime.JsonValueHelper in '..\Runtime\JsonToDelphi.Runtime.JsonValueHelper.pas',
+  Tests.Runtime.JsonValueHelper in 'Tests.Runtime.JsonValueHelper.pas',
+  Tests.Runtime.PersonDTO in 'Tests.Runtime.PersonDTO.pas',
+  Tests.Runtime.DTO in 'Tests.Runtime.DTO.pas',
+  Tests.Runtime.SimpleDTO in 'Tests.Runtime.SimpleDTO.pas',
+  Tests.Runtime.SuppressZero in 'Tests.Runtime.SuppressZero.pas';
 
 {$R *.RES}
 

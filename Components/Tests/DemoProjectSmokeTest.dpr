@@ -4,15 +4,15 @@ program DemoProjectSmokeTest;
 
 uses
   System.SysUtils,
-  Pkg.Json.Generator.Delphi in '..\..\Generator LIB\Delphi\Pkg.Json.Generator.Delphi.pas',
-  Pkg.Json.Generator.Builder in '..\..\Generator LIB\Core\Pkg.Json.Generator.Builder.pas',
-  Pkg.Json.Generator.Errors in '..\..\Generator LIB\Core\Pkg.Json.Generator.Errors.pas',
-  Pkg.Json.Generator.Validation in '..\..\Generator LIB\Core\Pkg.Json.Generator.Validation.pas',
-  Pkg.Json.Generator.DelphiWriter in '..\..\Generator LIB\Delphi\Pkg.Json.Generator.DelphiWriter.pas',
-  Pkg.Json.Generator.DelphiNaming in '..\..\Generator LIB\Delphi\Pkg.Json.Generator.DelphiNaming.pas',
-  Pkg.Json.Generator.DelphiSettings in '..\..\Generator LIB\Delphi\Pkg.Json.Generator.DelphiSettings.pas',
-  Pkg.Json.Generator.Model in '..\..\Generator LIB\Core\Pkg.Json.Generator.Model.pas',
-  Pkg.Json.GeneratorGUI.DemoProject in '..\Pkg.Json.GeneratorGUI.DemoProject.pas';
+  JsonToDelphi.Generator.Delphi in '..\..\Generator LIB\Delphi\JsonToDelphi.Generator.Delphi.pas',
+  JsonToDelphi.Generator.Core.Builder in '..\..\Generator LIB\Core\JsonToDelphi.Generator.Core.Builder.pas',
+  JsonToDelphi.Generator.Core.Errors in '..\..\Generator LIB\Core\JsonToDelphi.Generator.Core.Errors.pas',
+  JsonToDelphi.Generator.Core.Validation in '..\..\Generator LIB\Core\JsonToDelphi.Generator.Core.Validation.pas',
+  JsonToDelphi.Generator.Delphi.Writer in '..\..\Generator LIB\Delphi\JsonToDelphi.Generator.Delphi.Writer.pas',
+  JsonToDelphi.Generator.Delphi.Naming in '..\..\Generator LIB\Delphi\JsonToDelphi.Generator.Delphi.Naming.pas',
+  JsonToDelphi.Generator.Delphi.Settings in '..\..\Generator LIB\Delphi\JsonToDelphi.Generator.Delphi.Settings.pas',
+  JsonToDelphi.Generator.Core.Model in '..\..\Generator LIB\Core\JsonToDelphi.Generator.Core.Model.pas',
+  JsonToDelphi.GUI.DemoProject in '..\JsonToDelphi.GUI.DemoProject.pas';
 
 function DefaultOptions: TDelphiGeneratorSettings;
 begin

@@ -49,7 +49,7 @@
         <DCC_F>false</DCC_F>
         <DCC_K>false</DCC_K>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
-        <DCC_UnitSearchPath>$(BDS)\Source\DUnit\src;..\Lib;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>$(BDS)\Source\DUnit\src;..\Runtime;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_Define>_CONSOLE_TESTRUNNER;$(DCC_Define)</DCC_Define>
         <SanitizedProjectName>JsonToDelphiClassTests</SanitizedProjectName>
         <VerInfo_Locale>1033</VerInfo_Locale>
@@ -86,14 +86,14 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="TestPkg.TestTJSONName.pas"/>
-        <DCCReference Include="..\Lib\Pkg.Json.JSONName.pas"/>
-        <DCCReference Include="..\Lib\Pkg.Json.JsonValueHelper.pas"/>
-        <DCCReference Include="TeskPkg.TestJsonValueHelper.pas"/>
-        <DCCReference Include="TestPkg.PersonDTO.pas"/>
-        <DCCReference Include="TestPkg.TestJsonDTO.pas"/>
-        <DCCReference Include="TestPkg.SimpleDTO.pas"/>
-        <DCCReference Include="TestPkg.TestSuppressZero.pas"/>
+        <DCCReference Include="Tests.Runtime.JSONName.pas"/>
+        <DCCReference Include="..\Runtime\JsonToDelphi.Runtime.JSONName.pas"/>
+        <DCCReference Include="..\Runtime\JsonToDelphi.Runtime.JsonValueHelper.pas"/>
+        <DCCReference Include="Tests.Runtime.JsonValueHelper.pas"/>
+        <DCCReference Include="Tests.Runtime.PersonDTO.pas"/>
+        <DCCReference Include="Tests.Runtime.DTO.pas"/>
+        <DCCReference Include="Tests.Runtime.SimpleDTO.pas"/>
+        <DCCReference Include="Tests.Runtime.SuppressZero.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

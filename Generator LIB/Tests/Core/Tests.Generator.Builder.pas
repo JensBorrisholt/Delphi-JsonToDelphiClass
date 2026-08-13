@@ -4,7 +4,7 @@ interface
 
 uses
   DUnitX.TestFramework,
-  Pkg.Json.Generator.Model;
+  JsonToDelphi.Generator.Core.Model;
 
 type
   [TestFixture]
@@ -36,8 +36,8 @@ implementation
 
 uses
   System.SysUtils,
-  Pkg.Json.Generator.Builder,
-  Pkg.Json.Generator.Errors;
+  JsonToDelphi.Generator.Core.Builder,
+  JsonToDelphi.Generator.Core.Errors;
 
 procedure TGeneratorBuilderTests.AssertSemanticKind(const AJson, AFieldName: string; AExpected: TSemanticValueKind);
 var

@@ -1,6 +1,18 @@
 Delphi-JsonToDelphiClass
 ========================
 
+## Namespace update: 13th August 2026 ##
+
+The historical `Pkg.*` unit names originated from the initials of Petar
+Georgiev, who created the original project. As the codebase has since been
+substantially rewritten and expanded, the units now use the product-oriented
+`JsonToDelphi.*` namespace instead of being tied to an individual developer's
+name. The former `Lib` directory is now named `Runtime` to reflect that these
+units are dependencies of the generated Delphi code. This also provides clear,
+consistent namespaces for the runtime, generator and GUI layers. Existing
+projects must update their unit references, for example from `Pkg.Json.DTO` to
+`JsonToDelphi.Runtime.DTO`.
+
 ## Fixes & Features: 12th August 2026 ##
 
 ### Features ###
@@ -88,7 +100,7 @@ GetIt Package Manager before opening or compiling the project:
   `TCSharpSettings` inherit from this base class while retaining only their
   language-specific options.
 
-* Removed the legacy `Pkg.Json.Settings` generator settings implementation.
+* Removed the legacy `JsonToDelphi.Runtime.Settings` generator settings implementation.
   Generator settings are now owned by the individual output-language
   backends.
 
@@ -268,7 +280,7 @@ Thanks to [DummyJSON](https://dummyjson.com/) for providing this service.
 
 ### Features ###
 * More interceptors where published in a new repo: https://github.com/JensBorrisholt/Json-Interceptors
-* Added the possibility to download Pkg.Json.DTO.pas from www.Json2Delphi.com
+* Added the possibility to download JsonToDelphi.Runtime.DTO.pas from www.Json2Delphi.com
 
 
 ## Fixes & Features: 23th December 2021 ##

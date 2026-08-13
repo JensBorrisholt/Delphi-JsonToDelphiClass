@@ -3,7 +3,7 @@
 interface
 
 uses
-  Pkg.Json.DTO, System.Generics.Collections, REST.Json.Types;
+  JsonToDelphi.Runtime.DTO, System.Generics.Collections, REST.Json.Types;
 
 {$M+}
 

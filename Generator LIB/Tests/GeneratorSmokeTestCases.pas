@@ -14,17 +14,17 @@ implementation
 uses
   System.IOUtils,
   REST.Json.Types,
-  Pkg.Json.DTO,
-  Pkg.Json.Generator.Settings,
-  Pkg.Json.Generator.Delphi,
-  Pkg.Json.Generator.Builder,
-  Pkg.Json.Generator.Errors,
-  Pkg.Json.Generator.DelphiWriter,
-  Pkg.Json.Generator.DelphiSettings,
-  Pkg.Json.Generator.Model,
-  Pkg.Json.Generator.CSharp,
-  Pkg.Json.Generator.CSharpSettings,
-  Pkg.Json.GeneratorGUI.DemoData;
+  JsonToDelphi.Runtime.DTO,
+  JsonToDelphi.Generator.Core.Settings,
+  JsonToDelphi.Generator.Delphi,
+  JsonToDelphi.Generator.Core.Builder,
+  JsonToDelphi.Generator.Core.Errors,
+  JsonToDelphi.Generator.Delphi.Writer,
+  JsonToDelphi.Generator.Delphi.Settings,
+  JsonToDelphi.Generator.Core.Model,
+  JsonToDelphi.Generator.CSharp,
+  JsonToDelphi.Generator.CSharp.Settings,
+  JsonToDelphi.GUI.DemoData;
 
 type
   TMatrixDTO = class(TJsonDTO)

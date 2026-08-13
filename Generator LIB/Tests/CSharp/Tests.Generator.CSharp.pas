@@ -42,9 +42,9 @@ implementation
 
 uses
   System.SysUtils,
-  Pkg.Json.Generator.CSharp,
-  Pkg.Json.Generator.CSharpNaming,
-  Pkg.Json.Generator.CSharpSettings;
+  JsonToDelphi.Generator.CSharp,
+  JsonToDelphi.Generator.CSharp.Naming,
+  JsonToDelphi.Generator.CSharp.Settings;
 
 procedure TCSharpSettingsTests.Defaults;
 var

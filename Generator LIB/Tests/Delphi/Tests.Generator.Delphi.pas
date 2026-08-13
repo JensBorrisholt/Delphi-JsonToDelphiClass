@@ -45,9 +45,9 @@ implementation
 
 uses
   System.SysUtils,
-  Pkg.Json.Generator.Delphi,
-  Pkg.Json.Generator.DelphiNaming,
-  Pkg.Json.Generator.DelphiSettings;
+  JsonToDelphi.Generator.Delphi,
+  JsonToDelphi.Generator.Delphi.Naming,
+  JsonToDelphi.Generator.Delphi.Settings;
 
 procedure TDelphiSettingsTests.Defaults;
 var

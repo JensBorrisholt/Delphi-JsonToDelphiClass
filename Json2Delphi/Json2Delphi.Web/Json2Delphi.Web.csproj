@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Pkg.Json.DTO.pas">
+    <Content Include="JsonToDelphi.Runtime.DTO.pas">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -33,7 +33,7 @@
     <None Update="GeneratorLIB.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Pkg.Json.DTO.pas">
+    <None Update="JsonToDelphi.Runtime.DTO.pas">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

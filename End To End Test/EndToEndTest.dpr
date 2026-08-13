@@ -10,8 +10,8 @@ uses
   System.IOUtils,
   System.Classes,
   System.Console in 'System.Console.pas',
-  Pkg.Json.Generator,
-  Pkg.Json.GeneratorGUI.DemoProject,
+  JsonToDelphi.Generator.Delphi,
+  JsonToDelphi.GUI.DemoProject,
   DelphiBuilderU in 'DelphiBuilderU.pas';
 
 function DemoDataRoot: string;

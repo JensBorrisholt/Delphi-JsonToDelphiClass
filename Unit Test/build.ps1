@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 
 $testDirectory = $PSScriptRoot
 $refactoredDirectory = Split-Path $testDirectory -Parent
-$libraryDirectory = Join-Path $refactoredDirectory 'Lib'
+$libraryDirectory = Join-Path $refactoredDirectory 'Runtime'
 $dunitXDirectory = 'C:\Program Files (x86)\Embarcadero\Studio\37.0\source\DunitX'
 $compiler = 'C:\Program Files (x86)\Embarcadero\Studio\37.0\bin\dcc32.exe'
 $dcuDirectory = Join-Path $testDirectory 'build\dcu'
