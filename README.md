@@ -27,6 +27,9 @@ Delphi-JsonToDelphiClass
 * Added type-unification and matrix demo files covering numeric promotion,
   nullable values, structural object merging, scalar matrices, object
   matrices, empty rows and jagged matrices.
+* Simplified the generated demo project's JSON tree view from six legacy units
+  to one shared VCL and FMX implementation while preserving the original JSON
+  visualization features.
 
 ### Fixes ###
 
