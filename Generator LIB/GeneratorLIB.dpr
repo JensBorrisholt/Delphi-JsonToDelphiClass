@@ -7,6 +7,7 @@ uses
   JsonToDelphi.Generator.Core.Builder in 'Core\JsonToDelphi.Generator.Core.Builder.pas',
   JsonToDelphi.Generator.Core.Errors in 'Core\JsonToDelphi.Generator.Core.Errors.pas',
   JsonToDelphi.Generator.Core.Validation in 'Core\JsonToDelphi.Generator.Core.Validation.pas',
+  JsonToDelphi.Generator.Core.TypeUnification in 'Core\JsonToDelphi.Generator.Core.TypeUnification.pas',
   JsonToDelphi.Generator.Delphi.Writer in 'Delphi\JsonToDelphi.Generator.Delphi.Writer.pas',
   JsonToDelphi.Generator.Core.Model in 'Core\JsonToDelphi.Generator.Core.Model.pas',
   JsonToDelphi.Generator.Delphi.Naming in 'Delphi\JsonToDelphi.Generator.Delphi.Naming.pas',

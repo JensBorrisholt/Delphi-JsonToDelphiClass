@@ -1,7 +1,9 @@
 Delphi-JsonToDelphiClass
 ========================
 
-## Namespace update: 13th August 2026 ##
+## Fixes & Features: 13th August 2026 ##
+
+### Features ###
 
 The historical `Pkg.*` unit names originated from the initials of Petar
 Georgiev, who created the original project. As the codebase has since been
@@ -12,6 +14,20 @@ units are dependencies of the generated Delphi code. This also provides clear,
 consistent namespaces for the runtime, generator and GUI layers. Existing
 projects must update their unit references, for example from `Pkg.Json.DTO` to
 `JsonToDelphi.Runtime.DTO`.
+
+### Generator architecture ###
+
+Type-unification rules now live in the dedicated
+`JsonToDelphi.Generator.Core.TypeUnification` unit. Numeric promotion,
+nullability, arrays and structural object merging are therefore applied
+consistently by the model builder, while source validation is responsible for
+syntax parsing and accurate source locations. New demo files prefixed with
+`Type Unification -` illustrate the supported merge scenarios.
+
+### Fixes ###
+
+* Pasting JSON into the input editor no longer causes the application to become
+  unresponsive due to recursive syntax highlighting.
 
 ## Fixes & Features: 12th August 2026 ##
 

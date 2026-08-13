@@ -4,11 +4,13 @@ program GeneratorLibTests;
 
 uses
   System.SysUtils,
+  DUnitX.Loggers.Console,
   DUnitX.TestFramework,
   Tests.ConsoleLogger in 'Runner\Tests.ConsoleLogger.pas',
   Tests.Generator.Core in 'Core\Tests.Generator.Core.pas',
   Tests.Generator.Model in 'Core\Tests.Generator.Model.pas',
   Tests.Generator.Validation in 'Core\Tests.Generator.Validation.pas',
+  Tests.Generator.TypeUnification in 'Core\Tests.Generator.TypeUnification.pas',
   Tests.Generator.Builder in 'Core\Tests.Generator.Builder.pas',
   Tests.Generator.Delphi in 'Delphi\Tests.Generator.Delphi.pas',
   Tests.Generator.CSharp in 'CSharp\Tests.Generator.CSharp.pas';
@@ -22,6 +24,7 @@ begin
   Runner := TDUnitX.CreateRunner;
   Runner.UseRTTI := True;
   Runner.AddLogger(TGeneratorConsoleLogger.Create);
+  Runner.AddLogger(TDUnitXConsoleLogger.Create(False));
   Results := Runner.Execute;
   if not Results.AllPassed then
     ExitCode := EXIT_ERRORS;

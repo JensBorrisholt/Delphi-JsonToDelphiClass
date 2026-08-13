@@ -21,7 +21,7 @@ implementation
 
 uses
   System.Json, System.SysUtils,
-  JsonToDelphi.Generator.Core.Errors, JsonToDelphi.Runtime.JsonValueHelper;
+  JsonToDelphi.Runtime.JsonValueHelper;
 
 type
   TJsonSourceParser = class
@@ -30,13 +30,11 @@ type
     FSource: string;
     FLocations: TDictionary<string, TJsonSourceLocation>;
     function DecodeString(const AStart, ALength: Integer): string;
-    function MergeSignatures(const AExpected, AActual: string): string;
     function ParseArray(const APath: string; const AStart: Integer): string;
     function ParseObject(const APath: string; const AStart: Integer): string;
     function ParseScalar(const AStart: Integer): string;
     function ParseString: string;
     function ParseValue(const APath: string; out AStart, ALength: Integer): string;
-    procedure RaiseTypeConflict(const APath, AExpected, AActual: string; const AStart, ALength: Integer);
     procedure SkipWhitespace;
     function TypeName(const AType: TJsonType): string;
   public
@@ -67,29 +65,9 @@ begin
   end;
 end;
 
-function TJsonSourceParser.MergeSignatures(const AExpected, AActual: string): string;
-begin
-  if AExpected = '' then
-    Exit(AActual);
-
-  if AActual = '' then
-    Exit(AExpected);
-
-  if SameText(AExpected, AActual) then
-    Exit(AExpected);
-
-  if ((AExpected = 'Integer') and (AActual = 'Int64')) or ((AExpected = 'Int64') and (AActual = 'Integer')) then
-    Exit('Int64');
-
-  if ((AExpected = 'Integer') or (AExpected = 'Int64') or (AExpected = 'Double')) and ((AActual = 'Integer') or (AActual = 'Int64') or (AActual = 'Double')) then
-    Exit('Double');
-
-  Result := #0;
-end;
-
 function TJsonSourceParser.ParseArray(const APath: string; const AStart: Integer): string;
 var
-  Actual, Expected, Merged: string;
+  Actual, Expected: string;
   Index, ItemLength, ItemStart: Integer;
 begin
   Inc(FPosition);
@@ -100,10 +78,8 @@ begin
   while (FPosition <= Length(FSource)) and (FSource[FPosition] <> ']') do
   begin
     Actual := ParseValue(Format('%s[%d]', [APath, Index]), ItemStart, ItemLength);
-    Merged := MergeSignatures(Expected, Actual);
-    if Merged = #0 then
-      RaiseTypeConflict(Format('%s[%d]', [APath, Index]), Expected, Actual, ItemStart, ItemLength);
-    Expected := Merged;
+    if Expected = '' then
+      Expected := Actual;
     Inc(Index);
     SkipWhitespace;
     if (FPosition <= Length(FSource)) and (FSource[FPosition] = ',') then
@@ -242,23 +218,6 @@ begin
     Location.Length := ALength;
     FLocations.AddOrSetValue(APath, Location);
   end;
-end;
-
-procedure TJsonSourceParser.RaiseTypeConflict(const APath, AExpected, AActual: string; const AStart, ALength: Integer);
-
-  function LeafType(const Signature: string): string;
-  var
-    P: Integer;
-  begin
-    Result := Signature;
-    P := LastDelimiter('<', Result);
-    if P > 0 then
-      Result := Copy(Result, P + 1, MaxInt);
-    Result := StringReplace(Result, '>', '', [rfReplaceAll]);
-  end;
-
-begin
-  raise EJsonGenerator.CreateAt(Format('Array element type conflict at %s:' + sLineBreak + 'expected %s, found %s', [APath, LeafType(AExpected), LeafType(AActual)]), APath, AStart - 1, ALength);
 end;
 
 procedure TJsonSourceParser.SkipWhitespace;

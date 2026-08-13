@@ -24,6 +24,7 @@ type
     constructor Create(AJsonKind: TJsonValueKind; ASemanticKind: TSemanticValueKind = svkUnknown);
     destructor Destroy; override;
     function ArrayDepth: Integer;
+    function ExtractElementType: TGeneratorType;
     function LeafType: TGeneratorType;
     property ElementType: TGeneratorType read FElementType write FElementType;
     property JsonKind: TJsonValueKind read FJsonKind write FJsonKind;
@@ -43,6 +44,7 @@ type
   public
     constructor Create;
     destructor Destroy; override;
+    function ExtractDataType: TGeneratorType;
     property DataType: TGeneratorType read FDataType write FDataType;
     property IsOptional: Boolean read FIsOptional write FIsOptional;
     property JsonName: string read FJsonName write FJsonName;
@@ -114,6 +116,12 @@ begin
   end;
 end;
 
+function TGeneratorType.ExtractElementType: TGeneratorType;
+begin
+  Result := FElementType;
+  FElementType := nil;
+end;
+
 function TGeneratorType.LeafType: TGeneratorType;
 begin
   Result := Self;
@@ -131,6 +139,12 @@ destructor TGeneratorField.Destroy;
 begin
   FDataType.Free;
   inherited;
+end;
+
+function TGeneratorField.ExtractDataType: TGeneratorType;
+begin
+  Result := FDataType;
+  FDataType := nil;
 end;
 
 constructor TGeneratorClass.Create;

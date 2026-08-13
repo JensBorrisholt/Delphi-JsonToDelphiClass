@@ -159,6 +159,7 @@
         </DelphiCompile>
         <DCCReference Include="..\Delphi\JsonToDelphi.Generator.Delphi.pas"/>
         <DCCReference Include="..\Core\JsonToDelphi.Generator.Core.Builder.pas"/>
+        <DCCReference Include="..\Core\JsonToDelphi.Generator.Core.TypeUnification.pas"/>
         <DCCReference Include="..\Core\JsonToDelphi.Generator.Core.Settings.pas"/>
         <DCCReference Include="..\Core\JsonToDelphi.Generator.Core.Errors.pas"/>
         <DCCReference Include="..\Delphi\JsonToDelphi.Generator.Delphi.Writer.pas"/>

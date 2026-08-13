@@ -161,6 +161,7 @@
         <DCCReference Include="Core\Tests.Generator.Core.pas"/>
         <DCCReference Include="Core\Tests.Generator.Model.pas"/>
         <DCCReference Include="Core\Tests.Generator.Validation.pas"/>
+        <DCCReference Include="Core\Tests.Generator.TypeUnification.pas"/>
         <DCCReference Include="Core\Tests.Generator.Builder.pas"/>
         <DCCReference Include="Delphi\Tests.Generator.Delphi.pas"/>
         <DCCReference Include="CSharp\Tests.Generator.CSharp.pas"/>
@@ -168,6 +169,7 @@
         <DCCReference Include="..\Core\JsonToDelphi.Generator.Core.Errors.pas"/>
         <DCCReference Include="..\Core\JsonToDelphi.Generator.Core.Settings.pas"/>
         <DCCReference Include="..\Core\JsonToDelphi.Generator.Core.Validation.pas"/>
+        <DCCReference Include="..\Core\JsonToDelphi.Generator.Core.TypeUnification.pas"/>
         <DCCReference Include="..\Core\JsonToDelphi.Generator.Core.Builder.pas"/>
         <DCCReference Include="..\Delphi\JsonToDelphi.Generator.Delphi.pas"/>
         <DCCReference Include="..\Delphi\JsonToDelphi.Generator.Delphi.Naming.pas"/>

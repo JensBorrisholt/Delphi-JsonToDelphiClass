@@ -17,6 +17,7 @@ type
   private
     FEditor: TRichEdit;
     FLanguage: TSyntaxLanguage;
+    FHighlighting: Boolean;
     FLastLength: Integer;
     FLastLineCount: Integer;
     procedure RememberDocument;
@@ -43,10 +44,18 @@ end;
 
 procedure TIncrementalSyntaxHighlighter.HighlightAll;
 begin
-  if FEditor.Text <> '' then
-    TSyntaxRichEditRenderer.Highlight(FEditor, FLanguage);
+  if FHighlighting then
+    Exit;
 
-  RememberDocument;
+  FHighlighting := True;
+  try
+    if FEditor.Text <> '' then
+      TSyntaxRichEditRenderer.Highlight(FEditor, FLanguage);
+
+    RememberDocument;
+  finally
+    FHighlighting := False;
+  end;
 end;
 
 procedure TIncrementalSyntaxHighlighter.RememberDocument;
@@ -59,24 +68,32 @@ procedure TIncrementalSyntaxHighlighter.TextChanged;
 var
   CurrentLength, CurrentLine, CurrentLineCount: Integer;
 begin
-  CurrentLength := Length(FEditor.Text);
-  CurrentLineCount := FEditor.Lines.Count;
-
-  if FEditor.Text = '' then
-  begin
-    RememberDocument;
+  if FHighlighting then
     Exit;
-  end;
 
-  if (Abs(CurrentLength - FLastLength) > 1) or (CurrentLineCount <> FLastLineCount) then
-    TSyntaxRichEditRenderer.Highlight(FEditor, FLanguage)
-  else
-  begin
-    CurrentLine := FEditor.Perform(EM_LINEFROMCHAR, FEditor.SelStart, 0);
-    TSyntaxRichEditRenderer.HighlightLine(FEditor, FLanguage, CurrentLine);
-  end;
+  FHighlighting := True;
+  try
+    CurrentLength := Length(FEditor.Text);
+    CurrentLineCount := FEditor.Lines.Count;
 
-  RememberDocument;
+    if FEditor.Text = '' then
+    begin
+      RememberDocument;
+      Exit;
+    end;
+
+    if (Abs(CurrentLength - FLastLength) > 1) or (CurrentLineCount <> FLastLineCount) then
+      TSyntaxRichEditRenderer.Highlight(FEditor, FLanguage)
+    else
+    begin
+      CurrentLine := FEditor.Perform(EM_LINEFROMCHAR, FEditor.SelStart, 0);
+      TSyntaxRichEditRenderer.HighlightLine(FEditor, FLanguage, CurrentLine);
+    end;
+
+    RememberDocument;
+  finally
+    FHighlighting := False;
+  end;
 end;
 
 end.

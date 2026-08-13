@@ -12,8 +12,8 @@ type
     [Test] procedure AcceptsHomogeneousArrays;
     [Test] procedure AcceptsIntegerInt64Promotion;
     [Test] procedure AcceptsNumericPromotionToDouble;
-    [Test] procedure RejectsMixedScalarArrayTypes;
-    [Test] procedure ReportsNestedConflictPathAndRange;
+    [Test] procedure AcceptsMixedScalarArrayTypes;
+    [Test] procedure CollectsNestedSourceLocations;
     [Test] procedure CollectsSourceLocations;
   end;
 
@@ -40,31 +40,25 @@ begin
   TJsonSourceValidator.ValidateArrayTypes('[1,2.5,2147483648]');
 end;
 
-procedure TGeneratorValidationTests.RejectsMixedScalarArrayTypes;
+procedure TGeneratorValidationTests.AcceptsMixedScalarArrayTypes;
 begin
-  try
-    TJsonSourceValidator.ValidateArrayTypes('[1,"2"]');
-    Assert.Fail('Expected EJsonGenerator');
-  except
-    on EJsonGenerator do
-      ;
-  end;
+  TJsonSourceValidator.ValidateArrayTypes('[1,"2"]');
 end;
 
-procedure TGeneratorValidationTests.ReportsNestedConflictPathAndRange;
+procedure TGeneratorValidationTests.CollectsNestedSourceLocations;
 const
   Json = '[[1,2],["3","4"]]';
+var
+  Location: TJsonSourceLocation;
+  Locations: TDictionary<string, TJsonSourceLocation>;
 begin
+  Locations := TDictionary<string, TJsonSourceLocation>.Create;
   try
-    TJsonSourceValidator.ValidateArrayTypes(Json);
-    Assert.Fail('Expected EJsonGenerator');
-  except
-    on E: EJsonGenerator do
-    begin
-      Assert.AreEqual('$[1]', E.JsonPath);
-      Assert.AreEqual('["3","4"]', Copy(Json, E.Position + 1, E.SelectionLength));
-      Assert.IsTrue(E.Message.Contains('expected Integer, found string'));
-    end;
+    TJsonSourceValidator.ValidateArrayTypes(Json, Locations);
+    Assert.IsTrue(Locations.TryGetValue('$[1]', Location));
+    Assert.AreEqual('["3","4"]', Copy(Json, Location.Position + 1, Location.Length));
+  finally
+    Locations.Free;
   end;
 end;
 

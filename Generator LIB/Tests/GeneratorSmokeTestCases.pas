@@ -430,6 +430,41 @@ begin
   end;
 end;
 
+procedure TestTypeUnificationDemoData;
+var
+  DataType: TGeneratorType;
+  Generator: TJsonToDelphiGenerator;
+  ItemClass: TGeneratorClass;
+begin
+  Generator := TJsonToDelphiGenerator.Create;
+  try
+    Generator.Parse(TDemoDataRepository.Load('Type Unification - Numbers.json'));
+    ItemClass := Generator.Model.RootClass.FindField('measurements').DataType.ElementType.ObjectClass;
+    Check(ItemClass.FindField('value').DataType.SemanticKind = svkFloat,
+      'Numeric demo must unify Integer, Int64 and Float to Float');
+
+    Generator.Parse(TDemoDataRepository.Load('Type Unification - Nullable.json'));
+    ItemClass := Generator.Model.RootClass.FindField('readings').DataType.ElementType.ObjectClass;
+    DataType := ItemClass.FindField('value').DataType;
+    Check((DataType.SemanticKind = svkInteger) and DataType.Nullable,
+      'Nullable demo must preserve the concrete type and mark it nullable');
+
+    Generator.Parse(TDemoDataRepository.Load('Type Unification - Objects.json'));
+    ItemClass := Generator.Model.RootClass.FindField('people').DataType.ElementType.ObjectClass;
+    Check(ItemClass.FindField('id').DataType.SemanticKind = svkInteger64,
+      'Object demo must unify field types');
+    Check(ItemClass.FindField('name').IsOptional and ItemClass.FindField('active').IsOptional and
+      ItemClass.FindField('email').IsOptional, 'Object demo must mark missing fields optional');
+
+    Generator.Parse(TDemoDataRepository.Load('Type Unification - Nested Arrays.json'));
+    DataType := Generator.Model.RootClass.FindField('matrix').DataType;
+    Check((DataType.ArrayDepth = 2) and (DataType.LeafType.SemanticKind = svkFloat) and
+      DataType.LeafType.Nullable, 'Nested array demo must recursively unify its leaf type');
+  finally
+    Generator.Free;
+  end;
+end;
+
 
 function GetGeneratorSmokeTests: TArray<TTestCase>;
 begin
@@ -449,7 +484,8 @@ begin
     TTestCase.Create('C# options', TestCSharpOptions),
     TTestCase.Create('Settings serialization', TestSettingsSerialization),
     TTestCase.Create('Demo data discovery', TestDemoDataDiscovery),
-    TTestCase.Create('Semantic demo data', TestSemanticDemoData)
+    TTestCase.Create('Semantic demo data', TestSemanticDemoData),
+    TTestCase.Create('Type unification demo data', TestTypeUnificationDemoData)
   ];
 end;
 

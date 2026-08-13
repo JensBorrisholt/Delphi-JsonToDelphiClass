@@ -19,6 +19,7 @@ type
     function IsGuid(const AValue: string): Boolean;
     function IsTime(const AValue: string): Boolean;
     function IsUri(const AValue: string): Boolean;
+    procedure MergeType(var ATarget: TGeneratorType; AObserved: TGeneratorType; const AJsonPath: string);
     function ScalarType(AValue: TJSONValue): TGeneratorType;
     procedure MarkOptionalFields(AArray: TJSONArray; AClass: TGeneratorClass);
     procedure ProcessObject(AObject: TJSONObject; AClass: TGeneratorClass; const AJsonPath: string);
@@ -32,7 +33,8 @@ type
 implementation
 
 uses
-  JsonToDelphi.Runtime.JsonValueHelper;
+  JsonToDelphi.Runtime.JsonValueHelper,
+  JsonToDelphi.Generator.Core.TypeUnification;
 
 constructor TJsonModelBuilder.Create(AModel: TGeneratorModel);
 begin
@@ -91,21 +93,24 @@ var
   Element: TJSONValue;
   ElementClass: TGeneratorClass;
   ElementType: TGeneratorType;
+  MergedType: TGeneratorType;
+  Index: Integer;
+  ItemPath: string;
 begin
   Result := TGeneratorType.Create(jvkArray);
+  Index := 0;
   for Element in AArray do
   begin
-    if Element is TJSONNull then
-      Continue;
+    ItemPath := Format('%s[%d]', [AJsonPath, Index]);
 
     if Element is TJSONArray then
-      ElementType := ArrayType(TJSONArray(Element), AParent, AJsonName, AJsonPath + '[]')
+      ElementType := ArrayType(TJSONArray(Element), AParent, AJsonName, ItemPath)
     else if Element is TJSONObject then
     begin
       ElementClass := AddClass(AParent, AJsonName, AJsonPath + '[]');
       ElementType := TGeneratorType.Create(jvkObject, svkObject);
       ElementType.ObjectClass := ElementClass;
-      ProcessObject(TJSONObject(Element), ElementClass, AJsonPath + '[]');
+      ProcessObject(TJSONObject(Element), ElementClass, ItemPath);
     end
     else
       ElementType := ScalarType(Element);
@@ -114,12 +119,11 @@ begin
       Result.ElementType := ElementType
     else
     begin
-      if (Result.ElementType.SemanticKind = svkInteger) and (ElementType.SemanticKind in [svkInteger64, svkFloat]) then
-        Result.ElementType.SemanticKind := ElementType.SemanticKind
-      else if (Result.ElementType.SemanticKind = svkInteger64) and (ElementType.SemanticKind = svkFloat) then
-        Result.ElementType.SemanticKind := svkFloat;
-      ElementType.Free;
+      MergedType := Result.ExtractElementType;
+      MergeType(MergedType, ElementType, ItemPath);
+      Result.ElementType := MergedType;
     end;
+    Inc(Index);
   end;
 
   if Result.ElementType = nil then
@@ -134,10 +138,6 @@ begin
   if Result.ElementType.SemanticKind = svkObject then
   begin
     ElementClass := Result.ElementType.ObjectClass;
-    for Element in AArray do
-      if Element is TJSONObject then
-        ProcessObject(TJSONObject(Element), ElementClass, AJsonPath + '[]');
-
     MarkOptionalFields(AArray, ElementClass);
   end;
 end;
@@ -210,30 +210,46 @@ begin
   end;
 end;
 
+procedure TJsonModelBuilder.MergeType(var ATarget: TGeneratorType; AObserved: TGeneratorType;
+  const AJsonPath: string);
+var
+  Location: TJsonSourceLocation;
+begin
+  if FLocations.TryGetValue(AJsonPath, Location) then
+    TGeneratorTypeUnifier.Merge(ATarget, AObserved, AJsonPath, Location.Position, Location.Length)
+  else
+    TGeneratorTypeUnifier.Merge(ATarget, AObserved, AJsonPath);
+end;
+
 procedure TJsonModelBuilder.ProcessValue(const AJsonName, AJsonPath: string; AValue: TJSONValue; AClass: TGeneratorClass);
 var
   Field: TGeneratorField;
   FieldClass: TGeneratorClass;
+  ObservedType: TGeneratorType;
+  TargetType: TGeneratorType;
 begin
   Field := AddField(AClass, AJsonName, AJsonPath);
-  if Field.DataType <> nil then
-  begin
-    if AValue is TJSONNull then
-      Field.DataType.Nullable := True;
-    Exit;
-  end;
 
   if AValue is TJSONObject then
   begin
     FieldClass := AddClass(AClass, AJsonName, AJsonPath);
-    Field.DataType := TGeneratorType.Create(jvkObject, svkObject);
-    Field.DataType.ObjectClass := FieldClass;
+    ObservedType := TGeneratorType.Create(jvkObject, svkObject);
+    ObservedType.ObjectClass := FieldClass;
     ProcessObject(TJSONObject(AValue), FieldClass, AJsonPath);
   end
   else if AValue is TJSONArray then
-    Field.DataType := ArrayType(TJSONArray(AValue), AClass, AJsonName, AJsonPath)
+    ObservedType := ArrayType(TJSONArray(AValue), AClass, AJsonName, AJsonPath)
   else
-    Field.DataType := ScalarType(AValue);
+    ObservedType := ScalarType(AValue);
+
+  TargetType := Field.ExtractDataType;
+  try
+    MergeType(TargetType, ObservedType, AJsonPath);
+    Field.DataType := TargetType;
+    TargetType := nil;
+  finally
+    TargetType.Free;
+  end;
 end;
 
 

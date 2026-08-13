@@ -86,6 +86,7 @@
         <DCCReference Include="Core\JsonToDelphi.Generator.Core.Builder.pas"/>
         <DCCReference Include="Core\JsonToDelphi.Generator.Core.Errors.pas"/>
         <DCCReference Include="Core\JsonToDelphi.Generator.Core.Validation.pas"/>
+        <DCCReference Include="Core\JsonToDelphi.Generator.Core.TypeUnification.pas"/>
         <DCCReference Include="Delphi\JsonToDelphi.Generator.Delphi.Writer.pas"/>
         <DCCReference Include="Delphi\JsonToDelphi.Generator.Delphi.Naming.pas"/>
         <DCCReference Include="Delphi\JsonToDelphi.Generator.Delphi.Settings.pas"/>

@@ -8,6 +8,7 @@ uses
   JsonToDelphi.Generator.Core.Builder in '..\..\Generator LIB\Core\JsonToDelphi.Generator.Core.Builder.pas',
   JsonToDelphi.Generator.Core.Errors in '..\..\Generator LIB\Core\JsonToDelphi.Generator.Core.Errors.pas',
   JsonToDelphi.Generator.Core.Validation in '..\..\Generator LIB\Core\JsonToDelphi.Generator.Core.Validation.pas',
+  JsonToDelphi.Generator.Core.TypeUnification in '..\..\Generator LIB\Core\JsonToDelphi.Generator.Core.TypeUnification.pas',
   JsonToDelphi.Generator.Delphi.Writer in '..\..\Generator LIB\Delphi\JsonToDelphi.Generator.Delphi.Writer.pas',
   JsonToDelphi.Generator.Delphi.Naming in '..\..\Generator LIB\Delphi\JsonToDelphi.Generator.Delphi.Naming.pas',
   JsonToDelphi.Generator.Delphi.Settings in '..\..\Generator LIB\Delphi\JsonToDelphi.Generator.Delphi.Settings.pas',
