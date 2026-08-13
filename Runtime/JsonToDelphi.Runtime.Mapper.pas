@@ -222,6 +222,17 @@ begin
     ResourceStream.Free;
     Buffer.Free;
   end;
+
+  Buffer := TStringList.Create;
+  ResourceStream := TResourceStream.Create(HInstance, 'JsonMatrix', 'PAS');
+  try
+    ResourceStream.Position := 0;
+    Buffer.LoadFromStream(ResourceStream);
+    Buffer.SaveToFile(TPath.GetDirectoryName(aFileName) + TPath.DirectorySeparatorChar + 'JsonToDelphi.Runtime.Matrix.pas');
+  finally
+    ResourceStream.Free;
+    Buffer.Free;
+  end;
 end;
 
 function TPkgJsonMapper.SuggestClassName(aSuggestedClassName: string): string;

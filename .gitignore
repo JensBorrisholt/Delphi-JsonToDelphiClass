@@ -109,6 +109,7 @@ TestResults/
 # Refactored project build output
 /Refactored/**/build/
 /Generator LIB/Tests/build/
+/Components/Tests/build/
 ###################
 # Web publish log #
 ###################

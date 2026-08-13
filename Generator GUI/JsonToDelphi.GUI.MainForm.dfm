@@ -2,7 +2,7 @@ object MainForm: TMainForm
   Left = 0
   Top = 0
   Caption = 'JSON Class Generator'
-  ClientHeight = 720
+  ClientHeight = 843
   ClientWidth = 1120
   Color = clBtnFace
   Constraints.MinHeight = 560
@@ -150,7 +150,7 @@ object MainForm: TMainForm
     Left = 0
     Top = 200
     Width = 1120
-    Height = 471
+    Height = 594
     Align = alClient
     BevelOuter = bvNone
     Padding.Left = 12
@@ -158,6 +158,7 @@ object MainForm: TMainForm
     Padding.Right = 12
     Padding.Bottom = 8
     TabOrder = 1
+    ExplicitHeight = 471
     object lblInput: TLabel
       Left = 520
       Top = 5
@@ -168,7 +169,7 @@ object MainForm: TMainForm
     object lblOutput: TLabel
       Left = 900
       Top = 5
-      Width = 103
+      Width = 93
       Height = 15
       Caption = 'Generated output'
     end
@@ -180,35 +181,55 @@ object MainForm: TMainForm
       Caption = 'JSON structure'
       Visible = False
     end
+    object SplitterTree: TSplitter
+      Left = 292
+      Top = 24
+      Width = 8
+      Height = 562
+      Beveled = True
+      Visible = False
+      ExplicitHeight = 439
+    end
+    object SplitterDemoData: TSplitter
+      Left = 520
+      Top = 24
+      Width = 8
+      Height = 562
+      Beveled = True
+      Visible = False
+      ExplicitHeight = 439
+    end
+    object Splitter: TSplitter
+      Left = 928
+      Top = 24
+      Width = 8
+      Height = 562
+      Beveled = True
+      OnMoved = SplitterMoved
+      ExplicitHeight = 439
+    end
     object treeJson: TTreeView
       Left = 12
       Top = 24
       Width = 280
-      Height = 439
+      Height = 562
       Align = alLeft
       Indent = 19
       ReadOnly = True
       TabOrder = 0
       Visible = False
-    end
-    object SplitterTree: TSplitter
-      Left = 292
-      Top = 24
-      Width = 8
-      Height = 439
-      Align = alLeft
-      Beveled = True
-      Visible = False
+      ExplicitHeight = 439
     end
     object pnlDemoData: TPanel
       Left = 300
       Top = 24
       Width = 220
-      Height = 439
+      Height = 562
       Align = alLeft
       BevelOuter = bvNone
       TabOrder = 1
       Visible = False
+      ExplicitHeight = 439
       object lblDemoData: TLabel
         Left = 0
         Top = 0
@@ -217,12 +238,13 @@ object MainForm: TMainForm
         Align = alTop
         Caption = 'Demo data'
         Layout = tlCenter
+        ExplicitWidth = 58
       end
       object lstDemoData: TListView
         Left = 0
         Top = 15
         Width = 220
-        Height = 424
+        Height = 547
         Align = alClient
         Columns = <>
         HideSelection = False
@@ -231,22 +253,14 @@ object MainForm: TMainForm
         TabOrder = 0
         ViewStyle = vsList
         OnSelectItem = lstDemoDataSelectItem
+        ExplicitHeight = 424
       end
-    end
-    object SplitterDemoData: TSplitter
-      Left = 520
-      Top = 24
-      Width = 8
-      Height = 439
-      Align = alLeft
-      Beveled = True
-      Visible = False
     end
     object memJson: TRichEdit
       Left = 528
       Top = 24
       Width = 400
-      Height = 439
+      Height = 562
       Align = alLeft
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
@@ -259,31 +273,24 @@ object MainForm: TMainForm
       WantTabs = True
       WordWrap = False
       OnChange = memJsonChange
-    end
-    object Splitter: TSplitter
-      Left = 928
-      Top = 24
-      Width = 8
-      Height = 439
-      Align = alLeft
-      Beveled = True
-      OnMoved = SplitterMoved
+      ExplicitHeight = 439
     end
     object FOutputPages: TPageControl
       Left = 936
       Top = 24
       Width = 172
-      Height = 439
+      Height = 562
       ActivePage = FDelphiTab
       Align = alClient
       TabOrder = 3
+      ExplicitHeight = 439
       object FDelphiTab: TTabSheet
         Caption = 'Delphi Unit'
         object memOutput: TRichEdit
           Left = 0
           Top = 0
           Width = 164
-          Height = 409
+          Height = 532
           Align = alClient
           Font.Charset = ANSI_CHARSET
           Font.Color = clWindowText
@@ -296,6 +303,7 @@ object MainForm: TMainForm
           TabOrder = 0
           WantTabs = True
           WordWrap = False
+          ExplicitHeight = 409
         end
       end
       object FCSharpTab: TTabSheet
@@ -368,21 +376,23 @@ object MainForm: TMainForm
   end
   object StatusBar: TStatusBar
     Left = 0
-    Top = 697
+    Top = 820
     Width = 1120
     Height = 23
     Panels = <>
     SimplePanel = True
+    ExplicitTop = 697
   end
   object pnlGitHub: TPanel
     Left = 0
-    Top = 671
+    Top = 794
     Width = 1120
     Height = 26
     Align = alBottom
     BevelOuter = bvNone
     Padding.Left = 12
     TabOrder = 3
+    ExplicitTop = 671
     object lblGitHub: TLabel
       Left = 12
       Top = 0

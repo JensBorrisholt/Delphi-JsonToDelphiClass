@@ -106,13 +106,15 @@
         <RcCompile Include="..\Components\DemoTemplate.rc">
             <Form>DemoTemplate.res</Form>
         </RcCompile>
+        <RcCompile Include="..\Runtime\JSON_PAS.rc">
+            <Form>JSON_PAS.res</Form>
+        </RcCompile>
         <DCCReference Include="JsonToDelphi.GUI.SettingsForm.pas">
             <Form>SettingsForm</Form>
         </DCCReference>
         <DCCReference Include="..\Runtime\JsonToDelphi.Runtime.Utils.pas"/>
         <DCCReference Include="JsonToDelphi.GUI.MainForm.pas">
             <Form>MainForm</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="Syntax\JsonToDelphi.GUI.Syntax.Incremental.pas"/>
         <DCCReference Include="Syntax\JsonToDelphi.GUI.Syntax.CSharp.pas"/>

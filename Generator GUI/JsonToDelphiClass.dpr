@@ -1,6 +1,7 @@
 program JsonToDelphiClass;
 
 {$R 'DemoTemplate.res' '..\Components\DemoTemplate.rc'}
+{$R 'JSON_PAS.res' '..\Runtime\JSON_PAS.rc'}
 
 uses
   Vcl.Forms,

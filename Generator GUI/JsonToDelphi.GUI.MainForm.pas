@@ -1,4 +1,4 @@
-unit JsonToDelphi.GUI.MainForm;
+﻿unit JsonToDelphi.GUI.MainForm;
 
 interface
 
@@ -101,6 +101,7 @@ type
     procedure SetStatus(const AText: string);
     procedure RefreshDemoData;
     procedure RefreshClassVisualizer;
+    procedure SaveRuntimeUnits(const ADestination: string);
   end;
 
 var
@@ -314,7 +315,28 @@ begin
     Exit;
 
   TFile.WriteAllText(SaveDialog.FileName, Editor.Text, TEncoding.UTF8);
+  if SameText(Extension, 'pas') then
+    SaveRuntimeUnits(ExtractFilePath(SaveDialog.FileName));
   SetStatus(Format('Saved %s', [ExtractFileName(SaveDialog.FileName)]));
+end;
+
+procedure TMainForm.SaveRuntimeUnits(const ADestination: string);
+
+  procedure SaveResource(const AResourceName, AFileName: string);
+  var
+    ResourceStream: TResourceStream;
+  begin
+    ResourceStream := TResourceStream.Create(HInstance, AResourceName, 'PAS');
+    try
+      ResourceStream.SaveToFile(TPath.Combine(ADestination, AFileName));
+    finally
+      ResourceStream.Free;
+    end;
+  end;
+
+begin
+  SaveResource('JsonDTO', 'JsonToDelphi.Runtime.DTO.pas');
+  SaveResource('JsonMatrix', 'JsonToDelphi.Runtime.Matrix.pas');
 end;
 
 procedure TMainForm.actSettingsExecute(Sender: TObject);
