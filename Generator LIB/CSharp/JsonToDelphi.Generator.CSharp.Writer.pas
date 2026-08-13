@@ -17,6 +17,7 @@ type
     FSettings: TCSharpSettings;
     function ClassName(AClass: TGeneratorClass): string;
     function FieldType(AField: TGeneratorField): string;
+    function HasMatrices(AModel: TGeneratorModel): Boolean;
     function IsValueType(AType: TGeneratorType): Boolean;
     function JsonPropertyNameAttribute(AField: TGeneratorField): string;
     function PropertyInitializer(AField: TGeneratorField): string;
@@ -79,6 +80,18 @@ begin
   Result := ClassName(AClass);
 end;
 
+function TCSharpWriter.HasMatrices(AModel: TGeneratorModel): Boolean;
+var
+  GeneratorClass: TGeneratorClass;
+  Field: TGeneratorField;
+begin
+  for GeneratorClass in AModel.Classes do
+    for Field in GeneratorClass.Fields do
+      if (Field.DataType.JsonKind = jvkArray) and (Field.DataType.ArrayDepth = 2) then
+        Exit(True);
+  Result := False;
+end;
+
 function TCSharpWriter.IsValueType(AType: TGeneratorType): Boolean;
 var
   Leaf: TGeneratorType;
@@ -105,7 +118,10 @@ begin
   if DataType.JsonKind = jvkArray then
   begin
     if not (DataType.Nullable or AField.IsOptional) then
-      Exit(' = [];');
+      if DataType.ArrayDepth = 2 then
+        Exit(' = new();')
+      else
+        Exit(' = [];');
     Exit;
   end;
 
@@ -155,6 +171,8 @@ begin
 
   if AType.JsonKind = jvkArray then
   begin
+    if AType.ArrayDepth = 2 then
+      Exit('Matrix<' + TypeName(AType.LeafType) + '>');
     ElementName := TypeName(AType.ElementType);
     if FSettings.UseReadonlyLists then
       Exit('IReadOnlyList<' + ElementName + '>');
@@ -185,9 +203,14 @@ begin
       Result := 'Uri';
     svkBytes:
       Result := 'byte';
+    svkString:
+      Result := 'string';
   else
     Result := 'object';
   end;
+
+  if AType.Nullable and not Result.EndsWith('?') then
+    Result := Result + '?';
 end;
 
 procedure TCSharpWriter.WriteClass(ALines: TStrings; AClass: TGeneratorClass);
@@ -239,6 +262,14 @@ begin
     if FSettings.NamespaceName.Trim <> '' then
     begin
       Lines.Add('namespace ' + FSettings.NamespaceName.Trim + ';');
+      Lines.Add('');
+    end;
+
+    if HasMatrices(AModel) then
+    begin
+      Lines.Add('public sealed class Matrix<T> : List<List<T>>');
+      Lines.Add('{');
+      Lines.Add('}');
       Lines.Add('');
     end;
 

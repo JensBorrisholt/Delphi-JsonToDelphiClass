@@ -32,7 +32,9 @@ uses
   Tests.Runtime.PersonDTO in 'Tests.Runtime.PersonDTO.pas',
   Tests.Runtime.DTO in 'Tests.Runtime.DTO.pas',
   Tests.Runtime.SimpleDTO in 'Tests.Runtime.SimpleDTO.pas',
-  Tests.Runtime.SuppressZero in 'Tests.Runtime.SuppressZero.pas';
+  Tests.Runtime.SuppressZero in 'Tests.Runtime.SuppressZero.pas',
+  JsonToDelphi.Runtime.Matrix in '..\Runtime\JsonToDelphi.Runtime.Matrix.pas',
+  Tests.Runtime.Matrix in 'Tests.Runtime.Matrix.pas';
 
 {$R *.RES}
 

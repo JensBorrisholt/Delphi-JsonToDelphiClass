@@ -5,32 +5,42 @@ Delphi-JsonToDelphiClass
 
 ### Features ###
 
-The historical `Pkg.*` unit names originated from the initials of Petar
-Georgiev, who created the original project. As the codebase has since been
-substantially rewritten and expanded, the units now use the product-oriented
-`JsonToDelphi.*` namespace instead of being tied to an individual developer's
-name. The former `Lib` directory is now named `Runtime` to reflect that these
-units are dependencies of the generated Delphi code. This also provides clear,
-consistent namespaces for the runtime, generator and GUI layers. Existing
-projects must update their unit references, for example from `Pkg.Json.DTO` to
-`JsonToDelphi.Runtime.DTO`.
-
-### Generator architecture ###
-
-Type-unification rules now live in the dedicated
-`JsonToDelphi.Generator.Core.TypeUnification` unit. Numeric promotion,
-nullability, arrays and structural object merging are therefore applied
-consistently by the model builder, while source validation is responsible for
-syntax parsing and accurate source locations. New demo files prefixed with
-`Type Unification -` illustrate the supported merge scenarios.
+* Renamed the historical `Pkg.*` units to the product-oriented
+  `JsonToDelphi.*` namespace. The `Pkg` prefix originated from the initials of
+  Petar Georgiev, who created the original project. Since the codebase has been
+  substantially rewritten and expanded, its unit names now describe the
+  product and their architectural role instead of an individual developer.
+* Renamed the former `Lib` directory to `Runtime` because these units are
+  dependencies of the generated Delphi code. Existing projects must update
+  their unit references, for example from `Pkg.Json.DTO` to
+  `JsonToDelphi.Runtime.DTO`.
+* Added centralized type unification in
+  `JsonToDelphi.Generator.Core.TypeUnification`. The model builder now handles
+  numeric promotion, nullability, nested arrays and structural object merging,
+  while validation remains responsible for JSON syntax and source locations.
+* Added `TMatrix<T>` and `TObjectMatrix<T>` to the Delphi runtime for
+  two-dimensional scalar and object arrays. Both types own their row lists,
+  while `TObjectMatrix<T>` also owns the objects contained in each row.
+* Added C# matrix generation through a self-contained `Matrix<T>` type derived
+  from `List<List<T>>`. The type works directly with `System.Text.Json` without
+  requiring a custom converter.
+* Added type-unification and matrix demo files covering numeric promotion,
+  nullable values, structural object merging, scalar matrices, object
+  matrices, empty rows and jagged matrices.
 
 ### Fixes ###
 
 * Pasting JSON into the input editor no longer causes the application to become
   unresponsive due to recursive syntax highlighting.
-* Two-dimensional object arrays now use nested owning `TObjectList` instances.
-  This prevents object leaks and uses explicit JSON mapping because Delphi's
-  REST serializer cannot reliably handle `TArray<TArray<TObject>>` directly.
+* Fixed memory leaks in generated two-dimensional object arrays. Generated
+  Delphi code now uses `TObjectMatrix<T>` so both row lists and their objects
+  have explicit ownership.
+* Added explicit Delphi JSON mapping for object matrices because Delphi's REST
+  serializer cannot reliably deserialize `TArray<TArray<TObject>>` directly.
+* Fixed C# string properties being emitted as `object` instead of `string`.
+* Updated the demo-project template to include all required runtime units.
+* Updated the end-to-end project unit search paths for the reorganized
+  generator library.
 
 ## Fixes & Features: 12th August 2026 ##
 

@@ -8,15 +8,7 @@ type
   TArrayMapper = class
   protected
     procedure RefreshArray<T>(aSource: TList<T>; var aDestination: TArray<T>);
-    procedure RefreshArray2D<T>(aSource: TObjectList<TList<T>>;
-      var aDestination: TArray<TArray<T>>);
-    procedure RefreshObjectArray2D<T: class>(aSource: TObjectList<TObjectList<T>>;
-      var aDestination: TArray<TArray<T>>);
     function List<T>(var aList: TList<T>; aSource: TArray<T>): TList<T>;
-    function List2D<T>(var aList: TObjectList<TList<T>>;
-      aSource: TArray<TArray<T>>): TObjectList<TList<T>>;
-    function ObjectList2D<T: class>(var aList: TObjectList<TObjectList<T>>;
-      aSource: TArray<TArray<T>>): TObjectList<TObjectList<T>>;
     function ObjectList<T: class>(var aList: TObjectList<T>; aSource: TArray<T>): TObjectList<T>;
   public
     constructor Create; virtual;
@@ -31,6 +23,9 @@ type
   protected
     function GetAsJson: string; virtual;
     procedure SetAsJson(aValue: string); virtual;
+    procedure LoadObjectMatrix<T: class>(aList: TObjectList<TObjectList<T>>; const aJson, aName: string);
+    procedure SetAsJsonWithoutFields(const aJson: string; const aNames: array of string);
+    function SaveObjectMatrix<T: class>(aList: TObjectList<TObjectList<T>>; const aJson, aName: string): string;
   public
     constructor Create; override;
     class function PrettyPrintJSON(aJson: string): string; overload;
@@ -217,25 +212,6 @@ begin
   Exit(aList);
 end;
 
-function TArrayMapper.List2D<T>(var aList: TObjectList<TList<T>>;
-  aSource: TArray<TArray<T>>): TObjectList<TList<T>>;
-var
-  Row: TArray<T>;
-  RowList: TList<T>;
-begin
-  if aList = nil then
-  begin
-    aList := TObjectList<TList<T>>.Create(True);
-    for Row in aSource do
-    begin
-      RowList := TList<T>.Create;
-      RowList.AddRange(Row);
-      aList.Add(RowList);
-    end;
-  end;
-  Result := aList;
-end;
-
 function TArrayMapper.ObjectList<T>(var aList: TObjectList<T>; aSource: TArray<T>): TObjectList<T>;
 var
   Element: T;
@@ -250,53 +226,123 @@ begin
   Exit(aList);
 end;
 
-function TArrayMapper.ObjectList2D<T>(var aList: TObjectList<TObjectList<T>>;
-  aSource: TArray<TArray<T>>): TObjectList<TObjectList<T>>;
+procedure TJsonDTO.LoadObjectMatrix<T>(aList: TObjectList<TObjectList<T>>; const aJson, aName: string);
 var
-  Row: TArray<T>;
+  RootValue: TJsonValue;
+  MatrixValue: TJsonValue;
+  Matrix: TJSONArray;
+  Row: TJSONArray;
   RowList: TObjectList<T>;
+  i: Integer;
+  J: Integer;
+  Item: T;
+  Unmarshaller: TJSONUnMarshal;
 begin
-  if aList = nil then
-  begin
-    aList := TObjectList<TObjectList<T>>.Create(True);
-    for Row in aSource do
-    begin
-      RowList := TObjectList<T>.Create(True);
-      RowList.AddRange(Row);
-      aList.Add(RowList);
+  RootValue := TJSONObject.ParseJSONValue(aJson);
+  try
+    if not(RootValue is TJSONObject) then
+      Exit;
+    MatrixValue := TJSONObject(RootValue).GetValue(aName);
+    if not(MatrixValue is TJSONArray) then
+      Exit;
+
+    aList.Clear;
+    Matrix := TJSONArray(MatrixValue);
+    Unmarshaller := TJSONUnMarshal.Create;
+    try
+      for i := 0 to Matrix.Count - 1 do
+      begin
+        if not(Matrix.Items[i] is TJSONArray) then
+          Continue;
+        Row := TJSONArray(Matrix.Items[i]);
+        RowList := TObjectList<T>.Create(True);
+        aList.Add(RowList);
+        for J := 0 to Row.Count - 1 do
+          if Row.Items[J] is TJSONObject then
+          begin
+            Item := nil;
+            try
+              Item := T(TClass(T).Create);
+              Unmarshaller.CreateObject(T, TJSONObject(Row.Items[J]), Item);
+              RowList.Add(Item);
+            except
+              on E: Exception do
+              begin
+                Item.Free;
+                raise EConversionError.CreateFmt('Cannot load object matrix %s row %d item %d: %s', [aName, i, J, E.Message]);
+              end;
+            end;
+          end;
+      end;
+    finally
+      Unmarshaller.Free;
     end;
+  finally
+    RootValue.Free;
   end;
-  Result := aList;
+end;
+
+function TJsonDTO.SaveObjectMatrix<T>(aList: TObjectList<TObjectList<T>>; const aJson, aName: string): string;
+var
+  RootValue: TJsonValue;
+  Root: TJSONObject;
+  Matrix: TJSONArray;
+  Row: TJSONArray;
+  Pair: TJSONPair;
+  i: Integer;
+  J: Integer;
+begin
+  RootValue := TJSONObject.ParseJSONValue(aJson);
+  if not(RootValue is TJSONObject) then
+  begin
+    RootValue.Free;
+    RootValue := TJSONObject.Create;
+  end;
+  Root := TJSONObject(RootValue);
+  try
+    Pair := Root.RemovePair(aName);
+    Pair.Free;
+    Matrix := TJSONArray.Create;
+    Root.AddPair(aName, Matrix);
+    if aList <> nil then
+      for i := 0 to aList.Count - 1 do
+      begin
+        Row := TJSONArray.Create;
+        Matrix.AddElement(Row);
+        for J := 0 to aList[i].Count - 1 do
+          Row.AddElement(TJson.ObjectToJsonObject(aList[i][J], FOptions));
+      end;
+    Result := Root.ToJSON;
+  finally
+    Root.Free;
+  end;
+end;
+
+procedure TJsonDTO.SetAsJsonWithoutFields(const aJson: string; const aNames: array of string);
+var
+  RootValue: TJsonValue;
+  Pair: TJSONPair;
+  Name: string;
+begin
+  RootValue := TJSONObject.ParseJSONValue(aJson);
+  try
+    if not(RootValue is TJSONObject) then
+      Exit;
+    for Name in aNames do
+    begin
+      Pair := TJSONObject(RootValue).RemovePair(Name);
+      Pair.Free;
+    end;
+    TJson.JsonToObject(Self, TJSONObject(RootValue), FOptions);
+  finally
+    RootValue.Free;
+  end;
 end;
 
 procedure TArrayMapper.RefreshArray<T>(aSource: TList<T>; var aDestination: TArray<T>);
 begin
   if aSource <> nil then
     aDestination := aSource.ToArray;
-end;
-
-procedure TArrayMapper.RefreshArray2D<T>(aSource: TObjectList<TList<T>>;
-  var aDestination: TArray<TArray<T>>);
-var
-  I: Integer;
-begin
-  if aSource = nil then
-    Exit;
-  SetLength(aDestination, aSource.Count);
-  for I := 0 to aSource.Count - 1 do
-    aDestination[I] := aSource[I].ToArray;
-end;
-
-procedure TArrayMapper.RefreshObjectArray2D<T>(aSource: TObjectList<TObjectList<T>>;
-  var aDestination: TArray<TArray<T>>);
-var
-  I: Integer;
-begin
-  if aSource = nil then
-    Exit;
-  SetLength(aDestination, aSource.Count);
-  for I := 0 to aSource.Count - 1 do
-    aDestination[I] := aSource[I].ToArray;
 end;
 
 type
@@ -309,26 +355,23 @@ type
 
 function TGenericListFieldInterceptor.ObjectsConverter(Data: TObject; Field: string): TListOfObjects;
 var
-  I: Integer;
+  i: Integer;
   RttiContext: TRttiContext;
   List: TList<TObject>;
   RttiProperty: TRttiProperty;
 begin
   SetLength(Result, 0);
-  RttiProperty := RttiContext.GetType(Data.ClassType).GetProperty(
-    Copy(Field, 2, MaxInt));
+  RttiProperty := RttiContext.GetType(Data.ClassType).GetProperty(Copy(Field, 2, MaxInt));
   if RttiProperty = nil then
-    raise EInvalidOperation.CreateFmt(
-      'Generic list property for field %s was not found on %s',
-      [Field, Data.ClassName]);
+    raise EInvalidOperation.CreateFmt('Generic list property for field %s was not found on %s', [Field, Data.ClassName]);
 
   List := TList<TObject>(RttiProperty.GetValue(Data).AsObject);
   if List = nil then
     Exit;
 
   SetLength(Result, List.Count);
-  for I := 0 to List.Count - 1 do
-    Result[I] := List[I];
+  for i := 0 to List.Count - 1 do
+    Result[i] := List[i];
 end;
 
 constructor GenericListReflectAttribute.Create;

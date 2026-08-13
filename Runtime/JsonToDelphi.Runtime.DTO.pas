@@ -8,11 +8,7 @@ type
   TArrayMapper = class
   protected
     procedure RefreshArray<T>(aSource: TList<T>; var aDestination: TArray<T>);
-    procedure RefreshArray2D<T>(aSource: TObjectList<TList<T>>; var aDestination: TArray < TArray < T >> );
-    procedure RefreshObjectArray2D<T: class>(aSource: TObjectList<TObjectList<T>>; var aDestination: TArray < TArray < T >> );
     function List<T>(var aList: TList<T>; aSource: TArray<T>): TList<T>;
-    function List2D<T>(var aList: TObjectList<TList<T>>; aSource: TArray < TArray < T >> ): TObjectList<TList<T>>;
-    function ObjectList2D<T: class>(var aList: TObjectList<TObjectList<T>>; aSource: TArray < TArray < T >> ): TObjectList<TObjectList<T>>;
     function ObjectList<T: class>(var aList: TObjectList<T>; aSource: TArray<T>): TObjectList<T>;
   public
     constructor Create; virtual;
@@ -27,9 +23,9 @@ type
   protected
     function GetAsJson: string; virtual;
     procedure SetAsJson(aValue: string); virtual;
-    procedure LoadObjectList2D<T: class, constructor>(var aList: TObjectList<TObjectList<T>>; const aJson, aName: string);
+    procedure LoadObjectMatrix<T: class>(aList: TObjectList<TObjectList<T>>; const aJson, aName: string);
     procedure SetAsJsonWithoutFields(const aJson: string; const aNames: array of string);
-    function SaveObjectList2D<T: class>(aList: TObjectList<TObjectList<T>>; const aJson, aName: string): string;
+    function SaveObjectMatrix<T: class>(aList: TObjectList<TObjectList<T>>; const aJson, aName: string): string;
   public
     constructor Create; override;
     class function PrettyPrintJSON(aJson: string): string; overload;
@@ -216,24 +212,6 @@ begin
   Exit(aList);
 end;
 
-function TArrayMapper.List2D<T>(var aList: TObjectList<TList<T>>; aSource: TArray < TArray < T >> ): TObjectList<TList<T>>;
-var
-  Row: TArray<T>;
-  RowList: TList<T>;
-begin
-  if aList = nil then
-  begin
-    aList := TObjectList < TList < T >>.Create(True);
-    for Row in aSource do
-    begin
-      RowList := TList<T>.Create;
-      RowList.AddRange(Row);
-      aList.Add(RowList);
-    end;
-  end;
-  Result := aList;
-end;
-
 function TArrayMapper.ObjectList<T>(var aList: TObjectList<T>; aSource: TArray<T>): TObjectList<T>;
 var
   Element: T;
@@ -248,7 +226,7 @@ begin
   Exit(aList);
 end;
 
-procedure TJsonDTO.LoadObjectList2D<T>(var aList: TObjectList<TObjectList<T>>; const aJson, aName: string);
+procedure TJsonDTO.LoadObjectMatrix<T>(aList: TObjectList<TObjectList<T>>; const aJson, aName: string);
 var
   RootValue: TJsonValue;
   MatrixValue: TJsonValue;
@@ -268,8 +246,7 @@ begin
     if not(MatrixValue is TJSONArray) then
       Exit;
 
-    aList.Free;
-    aList := TObjectList < TObjectList < T >>.Create(True);
+    aList.Clear;
     Matrix := TJSONArray(MatrixValue);
     Unmarshaller := TJSONUnMarshal.Create;
     try
@@ -283,13 +260,17 @@ begin
         for J := 0 to Row.Count - 1 do
           if Row.Items[J] is TJSONObject then
           begin
-            Item := T.Create;
+            Item := nil;
             try
+              Item := T(TClass(T).Create);
               Unmarshaller.CreateObject(T, TJSONObject(Row.Items[J]), Item);
               RowList.Add(Item);
             except
-              Item.Free;
-              raise;
+              on E: Exception do
+              begin
+                Item.Free;
+                raise EConversionError.CreateFmt('Cannot load object matrix %s row %d item %d: %s', [aName, i, J, E.Message]);
+              end;
             end;
           end;
       end;
@@ -301,7 +282,7 @@ begin
   end;
 end;
 
-function TJsonDTO.SaveObjectList2D<T>(aList: TObjectList<TObjectList<T>>; const aJson, aName: string): string;
+function TJsonDTO.SaveObjectMatrix<T>(aList: TObjectList<TObjectList<T>>; const aJson, aName: string): string;
 var
   RootValue: TJsonValue;
   Root: TJSONObject;
@@ -358,50 +339,10 @@ begin
   end;
 end;
 
-function TArrayMapper.ObjectList2D<T>(var aList: TObjectList<TObjectList<T>>; aSource: TArray < TArray < T >> ): TObjectList<TObjectList<T>>;
-var
-  Row: TArray<T>;
-  RowList: TObjectList<T>;
-begin
-  if aList = nil then
-  begin
-    aList := TObjectList < TObjectList < T >>.Create(True);
-    for Row in aSource do
-    begin
-      RowList := TObjectList<T>.Create(True);
-      RowList.AddRange(Row);
-      aList.Add(RowList);
-    end;
-  end;
-  Result := aList;
-end;
-
 procedure TArrayMapper.RefreshArray<T>(aSource: TList<T>; var aDestination: TArray<T>);
 begin
   if aSource <> nil then
     aDestination := aSource.ToArray;
-end;
-
-procedure TArrayMapper.RefreshArray2D<T>(aSource: TObjectList<TList<T>>; var aDestination: TArray < TArray < T >> );
-var
-  i: Integer;
-begin
-  if aSource = nil then
-    Exit;
-  SetLength(aDestination, aSource.Count);
-  for i := 0 to aSource.Count - 1 do
-    aDestination[i] := aSource[i].ToArray;
-end;
-
-procedure TArrayMapper.RefreshObjectArray2D<T>(aSource: TObjectList<TObjectList<T>>; var aDestination: TArray < TArray < T >> );
-var
-  i: Integer;
-begin
-  if aSource = nil then
-    Exit;
-  SetLength(aDestination, aSource.Count);
-  for i := 0 to aSource.Count - 1 do
-    aDestination[i] := aSource[i].ToArray;
 end;
 
 type

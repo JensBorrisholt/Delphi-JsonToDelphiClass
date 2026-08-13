@@ -1,7 +1,10 @@
 $ErrorActionPreference = 'Stop'
 
 $componentDirectory = $PSScriptRoot
-$runtimeUnit = Join-Path $componentDirectory '..\Runtime\JsonToDelphi.Runtime.DTO.pas'
+$runtimeUnits = @(
+  (Join-Path $componentDirectory '..\Runtime\JsonToDelphi.Runtime.DTO.pas'),
+  (Join-Path $componentDirectory '..\Runtime\JsonToDelphi.Runtime.Matrix.pas')
+)
 $templateDirectory = Join-Path $componentDirectory 'DemoTemplate'
 $zipFile = Join-Path $componentDirectory 'DemoTemplate.zip'
 $resourceScript = Join-Path $componentDirectory 'DemoTemplate.rc'
@@ -36,19 +39,21 @@ try {
       }
     }
 
-    $entry = $archive.CreateEntry('JsonToDelphi.Runtime.DTO.pas')
-    $entryStream = $entry.Open()
-    try {
-      $source = [System.IO.File]::OpenRead($runtimeUnit)
+    foreach ($runtimeUnit in $runtimeUnits) {
+      $entry = $archive.CreateEntry((Split-Path $runtimeUnit -Leaf))
+      $entryStream = $entry.Open()
       try {
-        $source.CopyTo($entryStream)
+        $source = [System.IO.File]::OpenRead($runtimeUnit)
+        try {
+          $source.CopyTo($entryStream)
+        }
+        finally {
+          $source.Dispose()
+        }
       }
       finally {
-        $source.Dispose()
+        $entryStream.Dispose()
       }
-    }
-    finally {
-      $entryStream.Dispose()
     }
   }
   finally {

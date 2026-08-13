@@ -46,43 +46,43 @@ TMatrix<T> = class(TObjectList<TList<T>>)
 TObjectMatrix<T: class> = class(TObjectList<TObjectList<T>>)
 ```
 
-- [ ] Give both types constructors with explicit ownership semantics.
-- [ ] Add assignment from `TArray<TArray<T>>`.
-- [ ] Add conversion back to `TArray<TArray<T>>`.
-- [ ] Support empty matrices.
-- [ ] Support empty rows.
-- [ ] Support rows with different lengths.
-- [ ] Support repeated assignment without leaking previous rows or objects.
-- [ ] Decide and document ownership when assigning object arrays.
+- [x] Give both types constructors with explicit ownership semantics.
+- [x] Add assignment from `TArray<TArray<T>>`.
+- [x] Add conversion back to `TArray<TArray<T>>`.
+- [x] Support empty matrices.
+- [x] Support empty rows.
+- [x] Support rows with different lengths.
+- [x] Support repeated assignment without leaking previous rows or objects.
+- [x] Decide and document ownership when assigning object arrays.
 
 ### Required runtime tests
 
-- [ ] `TMatrix<Integer>` assignment and conversion.
-- [ ] `TMatrix<string>` assignment and conversion.
-- [ ] Empty and jagged rows.
-- [ ] `TObjectMatrix<TTestObject>` assignment and conversion.
-- [ ] Matrix owns its row lists.
-- [ ] Object matrix rows own their objects.
-- [ ] Repeated assignment releases old content correctly.
+- [x] `TMatrix<Integer>` assignment and conversion.
+- [x] `TMatrix<string>` assignment and conversion.
+- [x] Empty and jagged rows.
+- [x] `TObjectMatrix<TTestObject>` assignment and conversion.
+- [x] Matrix owns its row lists.
+- [x] Object matrix rows own their objects.
+- [x] Repeated assignment releases old content correctly.
 
 ### Completion criteria
 
-- [ ] Runtime tests compile and pass without memory leaks.
-- [ ] Ownership behavior is documented in the unit.
+- [x] Runtime tests compile and pass without memory leaks.
+- [x] Ownership behavior is documented in the unit.
 
 ## Phase 3: Delphi generator
 
-- [ ] Generate `TMatrix<T>` when `ArrayDepth = 2` and the leaf is not an object.
-- [ ] Generate `TObjectMatrix<TClass>` when `ArrayDepth = 2` and the leaf is an
+- [x] Generate `TMatrix<T>` when `ArrayDepth = 2` and the leaf is not an object.
+- [x] Generate `TObjectMatrix<TClass>` when `ArrayDepth = 2` and the leaf is an
       object.
-- [ ] Add `JsonToDelphi.Runtime.Matrix` to generated `uses` clauses only when
+- [x] Add `JsonToDelphi.Runtime.Matrix` to generated `uses` clauses only when
       required.
-- [ ] Replace generated `TObjectList<TList<T>>` declarations.
-- [ ] Replace calls to `List2D` and `RefreshArray2D` with the matrix API.
-- [ ] Remove `List2D` and `RefreshArray2D` from `TArrayMapper`.
-- [ ] Verify constructors, getters, destructors and serialization hooks.
-- [ ] Verify nullable scalar matrix elements.
-- [ ] Verify structurally merged object matrix elements.
+- [x] Replace generated `TObjectList<TList<T>>` declarations.
+- [x] Replace calls to `List2D` and `RefreshArray2D` with the matrix API.
+- [x] Remove `List2D` and `RefreshArray2D` from `TArrayMapper`.
+- [x] Verify constructors, getters, destructors and serialization hooks.
+- [x] Verify nullable scalar matrix elements.
+- [x] Verify structurally merged object matrix elements.
 
 ### Expected Delphi output
 
@@ -93,11 +93,17 @@ property People: TObjectMatrix<TPerson> read GetPeople;
 
 ### Completion criteria
 
-- [ ] Generated scalar matrix code compiles and round-trips JSON.
-- [ ] Generated object matrix code compiles and round-trips JSON.
-- [ ] Generated code contains no `List2D` or `RefreshArray2D` references.
+- [x] Generated scalar matrix code compiles and round-trips JSON.
+- [x] Generated object matrix code compiles and round-trips JSON.
+- [x] Generated code contains no `List2D` or `RefreshArray2D` references.
 
 ## Phase 4: C# matrix type
+
+`Matrix<T>` is emitted once in each generated source file that needs it. This
+keeps generated C# self-contained and allows `System.Text.Json` to serialize it
+without a converter. Matrix properties remain concrete `Matrix<T>` collections
+when readonly-list output is enabled; records and immutable classes expose them
+through `init` accessors.
 
 Use one matrix type for scalar and object elements because C# garbage
 collection handles object lifetime:
@@ -108,13 +114,13 @@ public sealed class Matrix<T> : List<List<T>>
 }
 ```
 
-- [ ] Decide whether `Matrix<T>` is emitted in the generated source file or
+- [x] Decide whether `Matrix<T>` is emitted in the generated source file or
       supplied by a reusable C# runtime library.
-- [ ] Generate the type only when a two-dimensional array exists.
-- [ ] Generate `Matrix<int>`, `Matrix<Person>` and nullable variants correctly.
-- [ ] Ensure JSON serialization and deserialization work without custom code,
+- [x] Generate the type only when a two-dimensional array exists.
+- [x] Generate `Matrix<int>`, `Matrix<Person>` and nullable variants correctly.
+- [x] Ensure JSON serialization and deserialization work without custom code,
       or add the required converter.
-- [ ] Ensure records, immutable classes and readonly-list settings have defined
+- [x] Ensure records, immutable classes and readonly-list settings have defined
       matrix behavior.
 
 ### Expected C# output
@@ -126,20 +132,20 @@ public Matrix<Person> People { get; set; }
 
 ### Completion criteria
 
-- [ ] Generated scalar and object matrix code compiles.
-- [ ] Both matrix types round-trip through the configured JSON serializer.
+- [x] Generated scalar and object matrix code compiles.
+- [x] Both matrix types round-trip through the configured JSON serializer.
 
 ## Phase 5: Demo data and end-to-end tests
 
-- [ ] Add a primitive matrix demo.
-- [ ] Add an object matrix demo.
-- [ ] Add a jagged matrix demo.
-- [ ] Add nullable matrix elements.
-- [ ] Add object fields that require structural merging across rows.
-- [ ] Run each demo through both generators.
-- [ ] Compile generated Delphi output.
-- [ ] Compile generated C# output.
-- [ ] Verify JSON round-trip after modifying matrix content.
+- [x] Add a primitive matrix demo.
+- [x] Add an object matrix demo.
+- [x] Add a jagged matrix demo.
+- [x] Add nullable matrix elements.
+- [x] Add object fields that require structural merging across rows.
+- [x] Run each demo through both generators.
+- [x] Compile generated Delphi output.
+- [x] Compile generated C# output.
+- [x] Verify JSON round-trip after modifying matrix content.
 
 Suggested demo files:
 
@@ -152,18 +158,18 @@ Demo Data/Matrix - Nullable.json
 
 ## Final regression checklist
 
-- [ ] Generator unit tests pass.
-- [ ] Runtime unit tests pass.
-- [ ] Generator smoke tests pass.
-- [ ] Delphi GUI compiles.
-- [ ] Generator library compiles.
-- [ ] End-to-end test project compiles.
-- [ ] Existing one-dimensional scalar arrays still work.
-- [ ] Existing one-dimensional object arrays still work.
-- [ ] Existing generated DTO serialization behavior is unchanged outside the
+- [x] Generator unit tests pass.
+- [x] Runtime unit tests pass.
+- [x] Generator smoke tests pass.
+- [x] Delphi GUI compiles.
+- [x] Generator library compiles.
+- [x] End-to-end test project compiles.
+- [x] Existing one-dimensional scalar arrays still work.
+- [x] Existing one-dimensional object arrays still work.
+- [x] Existing generated DTO serialization behavior is unchanged outside the
       intentional 2D API change.
-- [ ] No compatibility methods or obsolete 2D collection code remain.
-- [ ] README documents the new matrix API.
+- [x] No compatibility methods or obsolete 2D collection code remain.
+- [x] README documents the new matrix API.
 
 ## Decisions to make before implementation
 

@@ -94,6 +94,8 @@
         <DCCReference Include="Tests.Runtime.DTO.pas"/>
         <DCCReference Include="Tests.Runtime.SimpleDTO.pas"/>
         <DCCReference Include="Tests.Runtime.SuppressZero.pas"/>
+        <DCCReference Include="..\Runtime\JsonToDelphi.Runtime.Matrix.pas"/>
+        <DCCReference Include="Tests.Runtime.Matrix.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

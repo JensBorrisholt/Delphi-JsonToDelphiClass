@@ -29,6 +29,7 @@ begin
       Generator.RootClassName := 'Root';
       Generator.DestinationUnitName := 'RootU';
       Generator.Parse('{"name":"Ada","items":[{"id":1},{"id":2}],' +
+        '"matrix":[[1,2],[3,4]],' +
         '"people":[[{"name":"Ada"}],[{"name":"Grace"}]]}');
       TDemoProjectGenerator.Generate(Destination, 'RootU',
         Generator.GeneratedRootClassName, Generator.Json,

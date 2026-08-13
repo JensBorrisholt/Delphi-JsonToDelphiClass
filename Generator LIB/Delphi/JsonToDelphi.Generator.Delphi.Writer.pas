@@ -21,6 +21,7 @@ type
     function FieldType(AField: TGeneratorField): string;
     function HasArrays(AClass: TGeneratorClass): Boolean;
     function HasComplexFields(AClass: TGeneratorClass): Boolean;
+    function HasMatrices(AModel: TGeneratorModel): Boolean;
     function HasObjectMatrix(AClass: TGeneratorClass): Boolean;
     function HasSemanticKind(AModel: TGeneratorModel; AKind: TSemanticValueKind): Boolean;
     function JsonNameAttribute(AField: TGeneratorField): string;
@@ -169,6 +170,18 @@ begin
   Result := False;
 end;
 
+function TDelphiUnitWriter.HasMatrices(AModel: TGeneratorModel): Boolean;
+var
+  GeneratorClass: TGeneratorClass;
+  Field: TGeneratorField;
+begin
+  for GeneratorClass in AModel.Classes do
+    for Field in GeneratorClass.Fields do
+      if (Field.DataType.JsonKind = jvkArray) and (Field.DataType.ArrayDepth = 2) then
+        Exit(True);
+  Result := False;
+end;
+
 function TDelphiUnitWriter.HasSemanticKind(AModel: TGeneratorModel; AKind: TSemanticValueKind): Boolean;
 var
   GeneratorClass: TGeneratorClass;
@@ -191,9 +204,9 @@ function TDelphiUnitWriter.ListStorageType(AField: TGeneratorField): string;
 begin
   if AField.DataType.ArrayDepth = 2 then
     if AField.DataType.LeafType.SemanticKind = svkObject then
-      Result := 'TObjectList<TObjectList<' + FieldType(AField) + '>>'
+      Result := 'TObjectMatrix<' + FieldType(AField) + '>'
     else
-      Result := 'TObjectList<TList<' + FieldType(AField) + '>>'
+      Result := 'TMatrix<' + FieldType(AField) + '>'
   else
     Result := ListType(AField) + '<' + FieldType(AField) + '>';
 end;
@@ -255,10 +268,14 @@ begin
   for Field in AClass.Fields do
     if Field.DataType.JsonKind = jvkArray then
     begin
-      ALines.AddFormat('    [%s%s]', [JsonNameAttribute(Field),
-        IfThen(Field.DataType.LeafType.SemanticKind = svkObject,
-          ', JSONMarshalled(False)', '')]);
-      ALines.AddFormat('    F%sArray: %s;', [FieldName(Field), ArrayStorageType(Field)]);
+      if not ((Field.DataType.ArrayDepth = 2) and
+        (Field.DataType.LeafType.SemanticKind = svkObject)) then
+      begin
+        ALines.AddFormat('    [%s%s]', [JsonNameAttribute(Field),
+          IfThen(Field.DataType.LeafType.SemanticKind = svkObject,
+            ', JSONMarshalled(False)', '')]);
+        ALines.AddFormat('    F%sArray: %s;', [FieldName(Field), ArrayStorageType(Field)]);
+      end;
 
       if Field.DataType.ArrayDepth = 2 then
         ALines.Add('    [JSONMarshalled(False)]')
@@ -366,7 +383,7 @@ begin
     if Field.DataType.SemanticKind = svkObject then
       ALines.AddFormat('  F%s.Free;', [FieldName(Field)])
     else if Field.DataType.JsonKind = jvkArray then
-      ALines.AddFormat('  Get%s.Free;', [FieldName(Field)]);
+      ALines.AddFormat('  F%s.Free;', [FieldName(Field)]);
 
   ALines.Add('  inherited;');
   ALines.Add('end;');
@@ -379,12 +396,14 @@ begin
         ALines.Add('');
         ALines.AddFormat('function %s.Get%s: %s;', [Name, FieldName(Field), ListStorageType(Field)]);
         ALines.Add('begin');
+        ALines.AddFormat('  if F%s = nil then', [FieldName(Field)]);
         if Field.DataType.LeafType.SemanticKind = svkObject then
-          ALines.AddFormat('  Result := ObjectList2D<%s>(F%s, F%sArray);',
-            [FieldType(Field), FieldName(Field), FieldName(Field)])
+          ALines.AddFormat('    F%s := TObjectMatrix<%s>.Create;',
+            [FieldName(Field), FieldType(Field)])
         else
-          ALines.AddFormat('  Result := List2D<%s>(F%s, F%sArray);',
-            [FieldType(Field), FieldName(Field), FieldName(Field)]);
+          ALines.AddFormat('    F%s := TMatrix<%s>.Create(F%sArray);',
+            [FieldName(Field), FieldType(Field), FieldName(Field)]);
+        ALines.AddFormat('  Result := F%s;', [FieldName(Field)]);
         ALines.Add('end;');
         Continue;
       end;
@@ -412,8 +431,11 @@ begin
         if Field.DataType.ArrayDepth = 2 then
         begin
           if Field.DataType.LeafType.SemanticKind <> svkObject then
-            ALines.AddFormat('  RefreshArray2D<%s>(F%s, F%sArray);',
-              [FieldType(Field), FieldName(Field), FieldName(Field)]);
+          begin
+            ALines.AddFormat('  if F%s <> nil then', [FieldName(Field)]);
+            ALines.AddFormat('    F%sArray := F%s.ToArray;',
+              [FieldName(Field), FieldName(Field)]);
+          end;
         end
         else
           ALines.AddFormat('  RefreshArray<%s>(F%s, F%sArray);', [FieldType(Field), FieldName(Field), FieldName(Field)]);
@@ -423,7 +445,7 @@ begin
       if (Field.DataType.JsonKind = jvkArray) and
         (Field.DataType.ArrayDepth = 2) and
         (Field.DataType.LeafType.SemanticKind = svkObject) then
-        ALines.AddFormat('  Result := SaveObjectList2D<%s>(F%s, Result, %s);',
+        ALines.AddFormat('  Result := SaveObjectMatrix<%s>(F%s, Result, %s);',
           [FieldType(Field), FieldName(Field), QuotedStr(Field.JsonName)]);
     ALines.Add('end;');
 
@@ -447,8 +469,11 @@ begin
         if (Field.DataType.JsonKind = jvkArray) and
           (Field.DataType.ArrayDepth = 2) and
           (Field.DataType.LeafType.SemanticKind = svkObject) then
-          ALines.AddFormat('  LoadObjectList2D<%s>(F%s, aValue, %s);',
+        begin
+          ALines.AddFormat('  Get%s;', [FieldName(Field)]);
+          ALines.AddFormat('  LoadObjectMatrix<%s>(F%s, aValue, %s);',
             [FieldType(Field), FieldName(Field), QuotedStr(Field.JsonName)]);
+        end;
       ALines.Add('end;');
     end;
   end;
@@ -499,10 +524,13 @@ begin
     Lines.Add('interface');
     Lines.Add('');
     Lines.Add('uses');
+    BaseClass := '  JsonToDelphi.Runtime.DTO';
+    if HasMatrices(AModel) then
+      BaseClass := BaseClass + ', JsonToDelphi.Runtime.Matrix';
+    BaseClass := BaseClass + ', System.Generics.Collections';
     if HasSemanticKind(AModel, svkUri) then
-      Lines.Add('  JsonToDelphi.Runtime.DTO, System.Generics.Collections, System.Net.URLClient, REST.Json.Types;')
-    else
-      Lines.Add('  JsonToDelphi.Runtime.DTO, System.Generics.Collections, REST.Json.Types;');
+      BaseClass := BaseClass + ', System.Net.URLClient';
+    Lines.Add(BaseClass + ', REST.Json.Types;');
     Lines.Add('');
     Lines.Add('{$M+}');
     Lines.Add('');
