@@ -11,6 +11,7 @@ uses
   Tests.Generator.Model in 'Core\Tests.Generator.Model.pas',
   Tests.Generator.Validation in 'Core\Tests.Generator.Validation.pas',
   Tests.Generator.TypeUnification in 'Core\Tests.Generator.TypeUnification.pas',
+  Tests.Generator.ObjectMatrixRuntime in 'Core\Tests.Generator.ObjectMatrixRuntime.pas',
   Tests.Generator.Builder in 'Core\Tests.Generator.Builder.pas',
   Tests.Generator.Delphi in 'Delphi\Tests.Generator.Delphi.pas',
   Tests.Generator.CSharp in 'CSharp\Tests.Generator.CSharp.pas';

@@ -162,6 +162,7 @@
         <DCCReference Include="Core\Tests.Generator.Model.pas"/>
         <DCCReference Include="Core\Tests.Generator.Validation.pas"/>
         <DCCReference Include="Core\Tests.Generator.TypeUnification.pas"/>
+        <DCCReference Include="Core\Tests.Generator.ObjectMatrixRuntime.pas"/>
         <DCCReference Include="Core\Tests.Generator.Builder.pas"/>
         <DCCReference Include="Delphi\Tests.Generator.Delphi.pas"/>
         <DCCReference Include="CSharp\Tests.Generator.CSharp.pas"/>

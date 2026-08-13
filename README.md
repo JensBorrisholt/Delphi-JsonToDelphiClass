@@ -28,6 +28,9 @@ syntax parsing and accurate source locations. New demo files prefixed with
 
 * Pasting JSON into the input editor no longer causes the application to become
   unresponsive due to recursive syntax highlighting.
+* Two-dimensional object arrays now use nested owning `TObjectList` instances.
+  This prevents object leaks and uses explicit JSON mapping because Delphi's
+  REST serializer cannot reliably handle `TArray<TArray<TObject>>` directly.
 
 ## Fixes & Features: 12th August 2026 ##
 

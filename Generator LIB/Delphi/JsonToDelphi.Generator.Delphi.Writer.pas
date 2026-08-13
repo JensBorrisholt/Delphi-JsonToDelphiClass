@@ -21,6 +21,7 @@ type
     function FieldType(AField: TGeneratorField): string;
     function HasArrays(AClass: TGeneratorClass): Boolean;
     function HasComplexFields(AClass: TGeneratorClass): Boolean;
+    function HasObjectMatrix(AClass: TGeneratorClass): Boolean;
     function HasSemanticKind(AModel: TGeneratorModel; AKind: TSemanticValueKind): Boolean;
     function JsonNameAttribute(AField: TGeneratorField): string;
     function ListStorageType(AField: TGeneratorField): string;
@@ -86,6 +87,18 @@ function TDelphiUnitWriter.FieldName(AField: TGeneratorField): string;
 begin
   if not FFieldNames.TryGetValue(AField, Result) then
     raise EInvalidOperation.CreateFmt('No Delphi name exists for model field %s', [AField.JsonPath]);
+end;
+
+function TDelphiUnitWriter.HasObjectMatrix(AClass: TGeneratorClass): Boolean;
+var
+  Field: TGeneratorField;
+begin
+  for Field in AClass.Fields do
+    if (Field.DataType.JsonKind = jvkArray) and
+      (Field.DataType.ArrayDepth = 2) and
+      (Field.DataType.LeafType.SemanticKind = svkObject) then
+      Exit(True);
+  Result := False;
 end;
 
 function TDelphiUnitWriter.FieldType(AField: TGeneratorField): string;
@@ -177,7 +190,10 @@ end;
 function TDelphiUnitWriter.ListStorageType(AField: TGeneratorField): string;
 begin
   if AField.DataType.ArrayDepth = 2 then
-    Result := 'TObjectList<TList<' + FieldType(AField) + '>>'
+    if AField.DataType.LeafType.SemanticKind = svkObject then
+      Result := 'TObjectList<TObjectList<' + FieldType(AField) + '>>'
+    else
+      Result := 'TObjectList<TList<' + FieldType(AField) + '>>'
   else
     Result := ListType(AField) + '<' + FieldType(AField) + '>';
 end;
@@ -239,7 +255,9 @@ begin
   for Field in AClass.Fields do
     if Field.DataType.JsonKind = jvkArray then
     begin
-      ALines.AddFormat('    [%s%s]', [JsonNameAttribute(Field), IfThen(Field.DataType.LeafType.SemanticKind = svkObject, ', JSONMarshalled(False)', '')]);
+      ALines.AddFormat('    [%s%s]', [JsonNameAttribute(Field),
+        IfThen(Field.DataType.LeafType.SemanticKind = svkObject,
+          ', JSONMarshalled(False)', '')]);
       ALines.AddFormat('    F%sArray: %s;', [FieldName(Field), ArrayStorageType(Field)]);
 
       if Field.DataType.ArrayDepth = 2 then
@@ -283,6 +301,8 @@ begin
   begin
     ALines.Add('  protected');
     ALines.Add('    function GetAsJson: string; override;');
+    if HasObjectMatrix(AClass) then
+      ALines.Add('    procedure SetAsJson(aValue: string); override;');
   end;
 
   if AClass.Fields.Count > 0 then
@@ -290,7 +310,12 @@ begin
 
   for Field in AClass.Fields do
     if Field.DataType.JsonKind = jvkArray then
+    begin
+      if (Field.DataType.ArrayDepth = 2) and
+        (Field.DataType.LeafType.SemanticKind = svkObject) then
+        ALines.Add('    [JSONMarshalled(False)]');
       ALines.AddFormat('    property %s: %s read Get%s;', [PropertyName(Field), ListStorageType(Field), FieldName(Field)])
+    end
     else if Field.DataType.SemanticKind = svkObject then
       ALines.AddFormat('    property %s: %s read F%s;', [PropertyName(Field), FieldType(Field), FieldName(Field)])
     else
@@ -354,7 +379,12 @@ begin
         ALines.Add('');
         ALines.AddFormat('function %s.Get%s: %s;', [Name, FieldName(Field), ListStorageType(Field)]);
         ALines.Add('begin');
-        ALines.AddFormat('  Result := List2D<%s>(F%s, F%sArray);', [FieldType(Field), FieldName(Field), FieldName(Field)]);
+        if Field.DataType.LeafType.SemanticKind = svkObject then
+          ALines.AddFormat('  Result := ObjectList2D<%s>(F%s, F%sArray);',
+            [FieldType(Field), FieldName(Field), FieldName(Field)])
+        else
+          ALines.AddFormat('  Result := List2D<%s>(F%s, F%sArray);',
+            [FieldType(Field), FieldName(Field), FieldName(Field)]);
         ALines.Add('end;');
         Continue;
       end;
@@ -380,12 +410,47 @@ begin
     for Field in AClass.Fields do
       if Field.DataType.JsonKind = jvkArray then
         if Field.DataType.ArrayDepth = 2 then
-          ALines.AddFormat('  RefreshArray2D<%s>(F%s, F%sArray);', [FieldType(Field), FieldName(Field), FieldName(Field)])
+        begin
+          if Field.DataType.LeafType.SemanticKind <> svkObject then
+            ALines.AddFormat('  RefreshArray2D<%s>(F%s, F%sArray);',
+              [FieldType(Field), FieldName(Field), FieldName(Field)]);
+        end
         else
           ALines.AddFormat('  RefreshArray<%s>(F%s, F%sArray);', [FieldType(Field), FieldName(Field), FieldName(Field)]);
 
     ALines.Add('  Result := inherited;');
+    for Field in AClass.Fields do
+      if (Field.DataType.JsonKind = jvkArray) and
+        (Field.DataType.ArrayDepth = 2) and
+        (Field.DataType.LeafType.SemanticKind = svkObject) then
+        ALines.AddFormat('  Result := SaveObjectList2D<%s>(F%s, Result, %s);',
+          [FieldType(Field), FieldName(Field), QuotedStr(Field.JsonName)]);
     ALines.Add('end;');
+
+    if HasObjectMatrix(AClass) then
+    begin
+      ALines.Add('');
+      ALines.AddFormat('procedure %s.SetAsJson(aValue: string);', [Name]);
+      ALines.Add('begin');
+      Prefix := '';
+      for Field in AClass.Fields do
+        if (Field.DataType.JsonKind = jvkArray) and
+          (Field.DataType.ArrayDepth = 2) and
+          (Field.DataType.LeafType.SemanticKind = svkObject) then
+        begin
+          if Prefix <> '' then
+            Prefix := Prefix + ', ';
+          Prefix := Prefix + QuotedStr(Field.JsonName);
+        end;
+      ALines.AddFormat('  SetAsJsonWithoutFields(aValue, [%s]);', [Prefix]);
+      for Field in AClass.Fields do
+        if (Field.DataType.JsonKind = jvkArray) and
+          (Field.DataType.ArrayDepth = 2) and
+          (Field.DataType.LeafType.SemanticKind = svkObject) then
+          ALines.AddFormat('  LoadObjectList2D<%s>(F%s, aValue, %s);',
+            [FieldType(Field), FieldName(Field), QuotedStr(Field.JsonName)]);
+      ALines.Add('end;');
+    end;
   end;
 end;
 

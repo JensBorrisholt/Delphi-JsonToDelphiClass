@@ -1,6 +1,7 @@
 program DemoProjectSmokeTest;
 
 {$APPTYPE CONSOLE}
+{$R '..\DemoTemplate.res'}
 
 uses
   System.SysUtils,
@@ -15,15 +16,6 @@ uses
   JsonToDelphi.Generator.Core.Model in '..\..\Generator LIB\Core\JsonToDelphi.Generator.Core.Model.pas',
   JsonToDelphi.GUI.DemoProject in '..\JsonToDelphi.GUI.DemoProject.pas';
 
-function DefaultOptions: TDelphiGeneratorSettings;
-begin
-  Result.AddJsonPropertyAttributes := False;
-  Result.PostFixClassNames := False;
-  Result.PostFix := 'DTO';
-  Result.UsePascalCase := True;
-  Result.SuppressZeroDate := True;
-end;
-
 var
   Destination: string;
   Generator: TJsonToDelphiGenerator;
@@ -32,11 +24,12 @@ begin
     if ParamCount <> 1 then
       raise Exception.Create('Destination directory argument required');
     Destination := ParamStr(1);
-    Generator := TJsonToDelphiGenerator.Create(DefaultOptions);
+    Generator := TJsonToDelphiGenerator.Create;
     try
       Generator.RootClassName := 'Root';
       Generator.DestinationUnitName := 'RootU';
-      Generator.Parse('{"name":"Ada","items":[{"id":1},{"id":2}]}');
+      Generator.Parse('{"name":"Ada","items":[{"id":1},{"id":2}],' +
+        '"people":[[{"name":"Ada"}],[{"name":"Grace"}]]}');
       TDemoProjectGenerator.Generate(Destination, 'RootU',
         Generator.GeneratedRootClassName, Generator.Json,
         Generator.GenerateUnit,

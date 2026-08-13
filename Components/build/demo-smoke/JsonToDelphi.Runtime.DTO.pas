@@ -1,4 +1,4 @@
-﻿unit JsonToDelphi.Runtime.DTO;
+unit JsonToDelphi.Runtime.DTO;
 
 interface
 
@@ -10,9 +10,13 @@ type
     procedure RefreshArray<T>(aSource: TList<T>; var aDestination: TArray<T>);
     procedure RefreshArray2D<T>(aSource: TObjectList<TList<T>>;
       var aDestination: TArray<TArray<T>>);
+    procedure RefreshObjectArray2D<T: class>(aSource: TObjectList<TObjectList<T>>;
+      var aDestination: TArray<TArray<T>>);
     function List<T>(var aList: TList<T>; aSource: TArray<T>): TList<T>;
     function List2D<T>(var aList: TObjectList<TList<T>>;
       aSource: TArray<TArray<T>>): TObjectList<TList<T>>;
+    function ObjectList2D<T: class>(var aList: TObjectList<TObjectList<T>>;
+      aSource: TArray<TArray<T>>): TObjectList<TObjectList<T>>;
     function ObjectList<T: class>(var aList: TObjectList<T>; aSource: TArray<T>): TObjectList<T>;
   public
     constructor Create; virtual;
@@ -246,6 +250,25 @@ begin
   Exit(aList);
 end;
 
+function TArrayMapper.ObjectList2D<T>(var aList: TObjectList<TObjectList<T>>;
+  aSource: TArray<TArray<T>>): TObjectList<TObjectList<T>>;
+var
+  Row: TArray<T>;
+  RowList: TObjectList<T>;
+begin
+  if aList = nil then
+  begin
+    aList := TObjectList<TObjectList<T>>.Create(True);
+    for Row in aSource do
+    begin
+      RowList := TObjectList<T>.Create(True);
+      RowList.AddRange(Row);
+      aList.Add(RowList);
+    end;
+  end;
+  Result := aList;
+end;
+
 procedure TArrayMapper.RefreshArray<T>(aSource: TList<T>; var aDestination: TArray<T>);
 begin
   if aSource <> nil then
@@ -253,6 +276,18 @@ begin
 end;
 
 procedure TArrayMapper.RefreshArray2D<T>(aSource: TObjectList<TList<T>>;
+  var aDestination: TArray<TArray<T>>);
+var
+  I: Integer;
+begin
+  if aSource = nil then
+    Exit;
+  SetLength(aDestination, aSource.Count);
+  for I := 0 to aSource.Count - 1 do
+    aDestination[I] := aSource[I].ToArray;
+end;
+
+procedure TArrayMapper.RefreshObjectArray2D<T>(aSource: TObjectList<TObjectList<T>>;
   var aDestination: TArray<TArray<T>>);
 var
   I: Integer;

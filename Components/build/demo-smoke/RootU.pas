@@ -8,6 +8,13 @@ uses
 {$M+}
 
 type
+  TPeople = class
+  private
+    FName: string;
+  published
+    property Name: string read FName write FName;
+  end;
+
   TItems = class
   private
     FId: Integer;
@@ -22,12 +29,18 @@ type
     [GenericListReflect]
     FItems: TObjectList<TItems>;
     FName: string;
+    [JSONName('people')]
+    FPeopleArray: TArray<TArray<TPeople>>;
+    [JSONMarshalled(False)]
+    FPeople: TObjectList<TObjectList<TPeople>>;
     function GetItems: TObjectList<TItems>;
+    function GetPeople: TObjectList<TObjectList<TPeople>>;
   protected
     function GetAsJson: string; override;
   published
     property Items: TObjectList<TItems> read GetItems;
     property Name: string read FName write FName;
+    property People: TObjectList<TObjectList<TPeople>> read GetPeople;
   public
     destructor Destroy; override;
   end;
@@ -39,6 +52,7 @@ implementation
 destructor TRoot.Destroy;
 begin
   GetItems.Free;
+  GetPeople.Free;
   inherited;
 end;
 
@@ -47,9 +61,15 @@ begin
   Result := ObjectList<TItems>(FItems, FItemsArray);
 end;
 
+function TRoot.GetPeople: TObjectList<TObjectList<TPeople>>;
+begin
+  Result := ObjectList2D<TPeople>(FPeople, FPeopleArray);
+end;
+
 function TRoot.GetAsJson: string;
 begin
   RefreshArray<TItems>(FItems, FItemsArray);
+  RefreshObjectArray2D<TPeople>(FPeople, FPeopleArray);
   Result := inherited;
 end;
 

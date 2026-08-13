@@ -132,12 +132,9 @@ begin
   if Result.ArrayDepth > 2 then
     raise EJsonGenerator.CreateFmt('Arrays with more than two dimensions are not supported: %s', [AJsonName]);
 
-  if (Result.ArrayDepth = 2) and (Result.LeafType.SemanticKind = svkObject) then
-    raise EJsonGenerator.CreateFmt('Two-dimensional object arrays are not supported: %s', [AJsonName]);
-
-  if Result.ElementType.SemanticKind = svkObject then
+  if Result.LeafType.SemanticKind = svkObject then
   begin
-    ElementClass := Result.ElementType.ObjectClass;
+    ElementClass := Result.LeafType.ObjectClass;
     MarkOptionalFields(AArray, ElementClass);
   end;
 end;
@@ -182,16 +179,35 @@ end;
 
 procedure TJsonModelBuilder.MarkOptionalFields(AArray: TJSONArray; AClass: TGeneratorClass);
 var
-  Element: TJSONValue;
+  Objects: TList<TJSONObject>;
   Field: TGeneratorField;
+  JsonObject: TJSONObject;
+
+  procedure CollectObjects(AValue: TJSONValue);
+  var
+    Item: TJSONValue;
+  begin
+    if AValue is TJSONObject then
+      Objects.Add(TJSONObject(AValue))
+    else if AValue is TJSONArray then
+      for Item in TJSONArray(AValue) do
+        CollectObjects(Item);
+  end;
+
 begin
-  for Field in AClass.Fields do
-    for Element in AArray do
-      if (Element is TJSONObject) and (TJSONObject(Element).GetValue(Field.JsonName) = nil) then
-      begin
-        Field.IsOptional := True;
-        Break;
-      end;
+  Objects := TList<TJSONObject>.Create;
+  try
+    CollectObjects(AArray);
+    for Field in AClass.Fields do
+      for JsonObject in Objects do
+        if JsonObject.GetValue(Field.JsonName) = nil then
+        begin
+          Field.IsOptional := True;
+          Break;
+        end;
+  finally
+    Objects.Free;
+  end;
 end;
 
 procedure TJsonModelBuilder.ProcessObject(AObject: TJSONObject; AClass: TGeneratorClass; const AJsonPath: string);

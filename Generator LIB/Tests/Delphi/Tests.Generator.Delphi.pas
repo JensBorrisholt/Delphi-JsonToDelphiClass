@@ -34,6 +34,7 @@ type
     [Test] procedure GeneratesObjectGraph;
     [Test] procedure GeneratesPrimitiveRootArray;
     [Test] procedure GeneratesTwoDimensionalArray;
+    [Test] procedure GeneratesOwnedTwoDimensionalObjectArray;
     [Test] procedure GeneratesSemanticTypes;
     [Test] procedure IncludesUriUnitOnlyWhenNeeded;
     [Test] procedure SuppressZeroDateCanBeDisabled;
@@ -290,6 +291,32 @@ begin
     Assert.IsTrue(Source.Contains('FItemsArray: TArray<TArray<Integer>>;'));
     Assert.IsTrue(Source.Contains('property Items: TObjectList<TList<Integer>>'));
     Assert.IsTrue(Source.Contains('RefreshArray2D<Integer>'));
+  finally
+    Generator.Free;
+  end;
+end;
+
+procedure TDelphiGeneratorTests.GeneratesOwnedTwoDimensionalObjectArray;
+var
+  Generator: TJsonToDelphiGenerator;
+  Source: string;
+begin
+  Generator := TJsonToDelphiGenerator.Create;
+  try
+    Generator.Parse('{"people":[[{"name":"Ada"}],[{"name":"Grace"}]]}');
+    Source := Generator.GenerateUnit;
+    Assert.IsTrue(Source.Contains(
+      'FPeople: TObjectList<TObjectList<TPeople>>;'));
+    Assert.IsTrue(Source.Contains(
+      'property People: TObjectList<TObjectList<TPeople>>'));
+    Assert.IsTrue(Source.Contains(
+      'Result := ObjectList2D<TPeople>(FPeople, FPeopleArray);'));
+    Assert.IsTrue(Source.Contains(
+      'RefreshObjectArray2D<TPeople>(FPeople, FPeopleArray);'));
+    Assert.IsFalse(Source.Contains(
+      'FPeople: TObjectList<TList<TPeople>>;'));
+    Assert.IsFalse(Source.Contains(
+      '[JSONName(''people''), JSONMarshalled(False)]'));
   finally
     Generator.Free;
   end;

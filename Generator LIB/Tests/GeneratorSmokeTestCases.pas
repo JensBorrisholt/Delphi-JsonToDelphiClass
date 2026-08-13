@@ -41,6 +41,27 @@ type
     property Matrix: TObjectList < TList < Integer >> read GetMatrix;
   end;
 
+  TMatrixPerson = class
+  private
+    FName: string;
+  published
+    property Name: string read FName write FName;
+  end;
+
+  TObjectMatrixDTO = class(TJsonDTO)
+  private
+    [JSONName('people')]
+    FPeopleArray: TArray<TArray<TMatrixPerson>>;
+    [JSONMarshalled(False)]
+    FPeople: TObjectList<TObjectList<TMatrixPerson>>;
+    function GetPeople: TObjectList<TObjectList<TMatrixPerson>>;
+  protected
+    function GetAsJson: string; override;
+  public
+    destructor Destroy; override;
+    property People: TObjectList<TObjectList<TMatrixPerson>> read GetPeople;
+  end;
+
 destructor TMatrixDTO.Destroy;
 begin
   GetMatrix.Free;
@@ -56,6 +77,23 @@ end;
 function TMatrixDTO.GetMatrix: TObjectList<TList<Integer>>;
 begin
   Result := List2D<Integer>(FMatrix, FMatrixArray);
+end;
+
+destructor TObjectMatrixDTO.Destroy;
+begin
+  GetPeople.Free;
+  inherited;
+end;
+
+function TObjectMatrixDTO.GetAsJson: string;
+begin
+  RefreshObjectArray2D<TMatrixPerson>(FPeople, FPeopleArray);
+  Result := inherited;
+end;
+
+function TObjectMatrixDTO.GetPeople: TObjectList<TObjectList<TMatrixPerson>>;
+begin
+  Result := ObjectList2D<TMatrixPerson>(FPeople, FPeopleArray);
 end;
 
 procedure Check(ACondition: Boolean; const AMessage: string);
@@ -430,6 +468,25 @@ begin
   end;
 end;
 
+procedure TestTwoDimensionalObjectArrayRuntime;
+var
+  DTO: TObjectMatrixDTO;
+  Json: string;
+begin
+  DTO := TObjectMatrixDTO.Create;
+  try
+    DTO.AsJson := '{"people":[[{"name":"Ada"}],[{"name":"Grace"}]]}';
+    Check(DTO.People.Count = 2, '2D object JSON must create two rows');
+    Check(DTO.People[0][0].Name = 'Ada', '2D object values must deserialize');
+    DTO.People[1][0].Name := 'Hopper';
+    Json := DTO.AsJson;
+    Check(Json.Contains('"name":"Hopper"'),
+      'Changed 2D object values must serialize');
+  finally
+    DTO.Free;
+  end;
+end;
+
 procedure TestTypeUnificationDemoData;
 var
   DataType: TGeneratorType;
@@ -474,6 +531,7 @@ begin
     TTestCase.Create('Empty array', TestEmptyArray),
     TTestCase.Create('Two-dimensional array', TestTwoDimensionalArray),
     TTestCase.Create('Two-dimensional array runtime', TestTwoDimensionalArrayRuntime),
+    TTestCase.Create('Two-dimensional object array runtime', TestTwoDimensionalObjectArrayRuntime),
     TTestCase.Create('Language-independent model', TestLanguageIndependentModel),
     TTestCase.Create('Semantic type inference', TestSemanticTypeInference),
     TTestCase.Create('Delphi semantic type generation', TestDelphiSemanticTypeGeneration),
