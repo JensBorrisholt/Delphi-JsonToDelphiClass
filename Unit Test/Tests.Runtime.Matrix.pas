@@ -57,7 +57,7 @@ end;
 procedure TMatrixTests.AssignsAndConvertsIntegers;
 var
   Matrix: TMatrix<Integer>;
-  Values: TArray<TArray<Integer>>;
+  Values: TMatrix<Integer>.TMatrixArray;
 begin
   Values := [[1, 2], [3, 4]];
   Matrix := TMatrix<Integer>.Create(Values);
