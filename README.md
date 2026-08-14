@@ -1,14 +1,16 @@
 ﻿# Delphi-JsonToDelphiClass
 
-Delphi-JsonToDelphiClass converts JSON into strongly typed Delphi classes and DTOs for Object Pascal and Embarcadero Delphi. It automates Delphi DTO generation and includes the runtime support needed for JSON serialization, deserialization, and JSON data binding in Delphi applications.
+**Delphi JSON to Class Generator for Object Pascal and Delphi DTOs**
+
+Delphi-JsonToDelphiClass is a Delphi JSON to class generator that converts representative JSON documents into strongly typed Delphi classes and DTOs. It automates Delphi DTO generation for Object Pascal and Embarcadero Delphi and includes the runtime support needed for JSON serialization, deserialization, and JSON data binding.
 
 It is both a visual JSON to Delphi class generator and a reusable code-generation library. The project includes a VCL desktop GUI, Delphi runtime units, demo-project generation, and a C# source-generation backend. JSON is validated and converted into a language-neutral model before the selected backend emits source code.
 
-[![JsonToDelphiClass 4.2 — JSON input and generated Delphi output](Images/Mainform_4.2.png)](Images/Mainform_4.2.png)
+[![Delphi JSON to class generator showing JSON input and generated Object Pascal code](Images/Mainform_4.2.png)](Images/Mainform_4.2.png)
 
 *JsonToDelphiClass 4.2 with JSON input, selectable output formats, and generated Delphi source.*
 
-## JSON to Delphi class generation example
+## Delphi JSON to class generation example
 
 Given this JSON input:
 
@@ -40,7 +42,7 @@ Person.AsJson := JsonText;  // deserialize JSON into the DTO
 JsonText := Person.AsJson;  // serialize the DTO back to JSON
 ```
 
-## JSON to Delphi generator features
+## Delphi JSON to class generator features
 
 - Generates a complete Delphi unit from a JSON object or root array.
 - Generates a complete C# source file from the same validated, language-neutral model.
