@@ -49,7 +49,7 @@
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=;CFBundleName=</VerInfo_Keys>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
-        <DCC_UnitSearchPath>..\Lib;Core;Delphi;CSharp;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>..\Runtime;Core;Delphi;CSharp;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win32)'!=''">
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
@@ -81,19 +81,20 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="Core\Pkg.Json.Generator.Settings.pas"/>
-        <DCCReference Include="Delphi\Pkg.Json.Generator.Delphi.pas"/>
-        <DCCReference Include="Core\Pkg.Json.Generator.Builder.pas"/>
-        <DCCReference Include="Core\Pkg.Json.Generator.Errors.pas"/>
-        <DCCReference Include="Core\Pkg.Json.Generator.Validation.pas"/>
-        <DCCReference Include="Delphi\Pkg.Json.Generator.DelphiWriter.pas"/>
-        <DCCReference Include="Delphi\Pkg.Json.Generator.DelphiNaming.pas"/>
-        <DCCReference Include="Delphi\Pkg.Json.Generator.DelphiSettings.pas"/>
-        <DCCReference Include="CSharp\Pkg.Json.Generator.CSharp.pas"/>
-        <DCCReference Include="CSharp\Pkg.Json.Generator.CSharpNaming.pas"/>
-        <DCCReference Include="CSharp\Pkg.Json.Generator.CSharpSettings.pas"/>
-        <DCCReference Include="CSharp\Pkg.Json.Generator.CSharpWriter.pas"/>
-        <DCCReference Include="Core\Pkg.Json.Generator.Model.pas"/>
+        <DCCReference Include="Core\JsonToDelphi.Generator.Core.Settings.pas"/>
+        <DCCReference Include="Delphi\JsonToDelphi.Generator.Delphi.pas"/>
+        <DCCReference Include="Core\JsonToDelphi.Generator.Core.Builder.pas"/>
+        <DCCReference Include="Core\JsonToDelphi.Generator.Core.Errors.pas"/>
+        <DCCReference Include="Core\JsonToDelphi.Generator.Core.Validation.pas"/>
+        <DCCReference Include="Core\JsonToDelphi.Generator.Core.TypeUnification.pas"/>
+        <DCCReference Include="Delphi\JsonToDelphi.Generator.Delphi.Writer.pas"/>
+        <DCCReference Include="Delphi\JsonToDelphi.Generator.Delphi.Naming.pas"/>
+        <DCCReference Include="Delphi\JsonToDelphi.Generator.Delphi.Settings.pas"/>
+        <DCCReference Include="CSharp\JsonToDelphi.Generator.CSharp.pas"/>
+        <DCCReference Include="CSharp\JsonToDelphi.Generator.CSharp.Naming.pas"/>
+        <DCCReference Include="CSharp\JsonToDelphi.Generator.CSharp.Settings.pas"/>
+        <DCCReference Include="CSharp\JsonToDelphi.Generator.CSharp.Writer.pas"/>
+        <DCCReference Include="Core\JsonToDelphi.Generator.Core.Model.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

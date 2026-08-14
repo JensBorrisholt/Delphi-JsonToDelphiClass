@@ -35,9 +35,9 @@ implementation
 
 uses
   System.SysUtils,
-  Pkg.Json.Generator.Builder,
-  Pkg.Json.Generator.Errors,
-  Pkg.Json.Generator.Model;
+  JsonToDelphi.Generator.Core.Builder,
+  JsonToDelphi.Generator.Core.Errors,
+  JsonToDelphi.Generator.Core.Model;
 
 procedure TGeneratorBuilderTests.AssertSemanticKind(const AJson, AFieldName: string; AExpected: Integer);
 var

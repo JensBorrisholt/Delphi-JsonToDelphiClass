@@ -1,0 +1,7 @@
+{
+  "people": [
+    { "id": 1, "name": "Ada" },
+    { "id": 2147483648, "active": true },
+    { "id": 3, "name": "Grace", "email": "grace@example.com" }
+  ]
+}

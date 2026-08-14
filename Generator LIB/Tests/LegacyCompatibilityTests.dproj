@@ -69,8 +69,8 @@
         <Icon_MainIcon>$(BDS)\bin\delphi_PROJECTICON.ico</Icon_MainIcon>
         <Icns_MainIcns>$(BDS)\bin\delphi_PROJECTICNS.icns</Icns_MainIcns>
         <DCC_ExeOutput>.\$(Platform)\$(Config)</DCC_ExeOutput>
-        <DCC_FrameworkPath>..\..\Lib;..\..\Generator LIB;$(DCC_FrameworkPath)</DCC_FrameworkPath>
-        <DCC_UnitSearchPath>..\..\Lib;..\..\Components;..\Core;..\Delphi;..\CSharp;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_FrameworkPath>..\..\Runtime;..\..\Generator LIB;$(DCC_FrameworkPath)</DCC_FrameworkPath>
+        <DCC_UnitSearchPath>..\..\Runtime;..\..\Components;..\Core;..\Delphi;..\CSharp;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <DCC_DcuOutput>.\$(Platform)\$(Config)</DCC_DcuOutput>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Android)'!=''">
@@ -157,11 +157,12 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="..\Delphi\Pkg.Json.Generator.Delphi.pas"/>
-        <DCCReference Include="..\Core\Pkg.Json.Generator.Builder.pas"/>
-        <DCCReference Include="..\Core\Pkg.Json.Generator.Model.pas"/>
-        <DCCReference Include="..\Delphi\Pkg.Json.Generator.DelphiWriter.pas"/>
-        <DCCReference Include="..\Delphi\Pkg.Json.Generator.DelphiSettings.pas"/>
+        <DCCReference Include="..\Delphi\JsonToDelphi.Generator.Delphi.pas"/>
+        <DCCReference Include="..\Core\JsonToDelphi.Generator.Core.Builder.pas"/>
+        <DCCReference Include="..\Core\JsonToDelphi.Generator.Core.TypeUnification.pas"/>
+        <DCCReference Include="..\Core\JsonToDelphi.Generator.Core.Model.pas"/>
+        <DCCReference Include="..\Delphi\JsonToDelphi.Generator.Delphi.Writer.pas"/>
+        <DCCReference Include="..\Delphi\JsonToDelphi.Generator.Delphi.Settings.pas"/>
         <DCCReference Include="TestConsoleRunner.pas"/>
         <DCCReference Include="..\..\Components\System.Console.pas"/>
         <BuildConfiguration Include="Base">

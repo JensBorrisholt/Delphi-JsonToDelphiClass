@@ -22,8 +22,8 @@ implementation
 uses
   System.Generics.Collections,
   System.SysUtils,
-  Pkg.Json.Generator.Errors,
-  Pkg.Json.Generator.Validation;
+  JsonToDelphi.Generator.Core.Errors,
+  JsonToDelphi.Generator.Core.Validation;
 
 procedure TGeneratorValidationTests.AcceptsHomogeneousArrays;
 begin

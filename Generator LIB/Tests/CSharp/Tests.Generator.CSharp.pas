@@ -30,6 +30,8 @@ type
     [Test] procedure GeneratesNamespaceAndClass;
     [Test] procedure GeneratesSemanticTypes;
     [Test] procedure GeneratesOneAndTwoDimensionalArrays;
+    [Test] procedure GeneratesObjectAndNullableMatrices;
+    [Test] procedure MatrixBehaviorIsStableAcrossClassOptions;
     [Test] procedure NullableValueTypesUseQuestionMark;
     [Test] procedure UriUsesReferenceNullability;
     [Test] procedure RecordsUseInitAccessors;
@@ -42,9 +44,9 @@ implementation
 
 uses
   System.SysUtils,
-  Pkg.Json.Generator.CSharp,
-  Pkg.Json.Generator.CSharpNaming,
-  Pkg.Json.Generator.CSharpSettings;
+  JsonToDelphi.Generator.CSharp,
+  JsonToDelphi.Generator.CSharp.Naming,
+  JsonToDelphi.Generator.CSharp.Settings;
 
 procedure TCSharpSettingsTests.Defaults;
 var
@@ -196,6 +198,7 @@ begin
     Assert.IsTrue(Source.Contains('public sealed class Order'));
     Assert.IsTrue(Source.Contains('public int Id { get; set; }'));
     Assert.IsTrue(Source.Contains('public Customer Customer { get; set; } = new();'));
+    Assert.IsFalse(Source.Contains('public sealed class Matrix<T>'));
   finally
     Generator.Free;
   end;
@@ -230,9 +233,51 @@ begin
     Generator.Parse('{"ids":[1,2],"matrix":[[1,2],[3,4]]}');
     Source := Generator.GenerateSource;
     Assert.IsTrue(Source.Contains('List<int> Ids'));
-    Assert.IsTrue(Source.Contains('List<List<int>> Matrix'));
+    Assert.IsTrue(Source.Contains('public sealed class Matrix<T> : List<List<T>>'));
+    Assert.IsTrue(Source.Contains('Matrix<int> Matrix'));
   finally
     Generator.Free;
+  end;
+end;
+
+procedure TCSharpGeneratorTests.GeneratesObjectAndNullableMatrices;
+var
+  Generator: TJsonToCSharpGenerator;
+  Source: string;
+begin
+  Generator := TJsonToCSharpGenerator.Create;
+  try
+    Generator.Parse('{"matrix":[[1,null],[2,3]],"people":[[{"name":"Ada"}],[{"name":"Grace"}]]}');
+    Source := Generator.GenerateSource;
+    Assert.IsTrue(Source.Contains('Matrix<int?> Matrix'), Source);
+    Assert.IsTrue(Source.Contains('Matrix<People> People'), Source);
+  finally
+    Generator.Free;
+  end;
+end;
+
+procedure TCSharpGeneratorTests.MatrixBehaviorIsStableAcrossClassOptions;
+var
+  Generator: TJsonToCSharpGenerator;
+  Settings: TCSharpSettings;
+  Source: string;
+begin
+  Settings := TCSharpSettings.Create;
+  try
+    Settings.UseRecords := True;
+    Settings.GenerateImmutableClasses := True;
+    Settings.UseReadonlyLists := True;
+    Generator := TJsonToCSharpGenerator.Create(Settings);
+    try
+      Generator.Parse('{"matrix":[[1,2],[3,4]]}');
+      Source := Generator.GenerateSource;
+      Assert.IsTrue(Source.Contains('public Matrix<int> Matrix { get; init; } = new();'));
+      Assert.IsFalse(Source.Contains('IReadOnlyList<IReadOnlyList<int>>'));
+    finally
+      Generator.Free;
+    end;
+  finally
+    Settings.Free;
   end;
 end;
 

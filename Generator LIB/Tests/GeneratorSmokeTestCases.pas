@@ -8,23 +8,25 @@ uses
   TestConsoleRunner;
 
 function GetGeneratorSmokeTests: TArray<TTestCase>;
+procedure WriteCSharpMatrixFixture(const AFileName: string);
 
 implementation
 
 uses
   System.IOUtils,
   REST.Json.Types,
-  Pkg.Json.DTO,
-  Pkg.Json.Generator.Settings,
-  Pkg.Json.Generator.Delphi,
-  Pkg.Json.Generator.Builder,
-  Pkg.Json.Generator.Errors,
-  Pkg.Json.Generator.DelphiWriter,
-  Pkg.Json.Generator.DelphiSettings,
-  Pkg.Json.Generator.Model,
-  Pkg.Json.Generator.CSharp,
-  Pkg.Json.Generator.CSharpSettings,
-  Pkg.Json.GeneratorGUI.DemoData;
+  JsonToDelphi.Runtime.DTO,
+  JsonToDelphi.Runtime.Matrix,
+  JsonToDelphi.Generator.Core.Settings,
+  JsonToDelphi.Generator.Delphi,
+  JsonToDelphi.Generator.Core.Builder,
+  JsonToDelphi.Generator.Core.Errors,
+  JsonToDelphi.Generator.Delphi.Writer,
+  JsonToDelphi.Generator.Delphi.Settings,
+  JsonToDelphi.Generator.Core.Model,
+  JsonToDelphi.Generator.CSharp,
+  JsonToDelphi.Generator.CSharp.Settings,
+  JsonToDelphi.GUI.DemoData;
 
 type
   TMatrixDTO = class(TJsonDTO)
@@ -32,30 +34,94 @@ type
     [JSONName('matrix')]
     FMatrixArray: TArray<TArray<Integer>>;
     [JSONMarshalled(False)]
-    FMatrix: TObjectList<TList<Integer>>;
-    function GetMatrix: TObjectList<TList<Integer>>;
+    FMatrix: TMatrix<Integer>;
+    function GetMatrix: TMatrix<Integer>;
   protected
     function GetAsJson: string; override;
   public
     destructor Destroy; override;
-    property Matrix: TObjectList < TList < Integer >> read GetMatrix;
+    property Matrix: TMatrix<Integer> read GetMatrix;
   end;
+
+  TMatrixPerson = class
+  private
+    FAge: Integer;
+    FName: string;
+  published
+    property Age: Integer read FAge write FAge;
+    property Name: string read FName write FName;
+  end;
+
+  TObjectMatrixDTO = class(TJsonDTO)
+  private
+    [JSONMarshalled(False)]
+    FPeople: TObjectMatrix<TMatrixPerson>;
+    function GetPeople: TObjectMatrix<TMatrixPerson>;
+  protected
+    function GetAsJson: string; override;
+    procedure SetAsJson(aValue: string); override;
+  public
+    destructor Destroy; override;
+    property People: TObjectMatrix<TMatrixPerson> read GetPeople;
+  end;
+
+procedure WriteCSharpMatrixFixture(const AFileName: string);
+var
+  Generator: TJsonToCSharpGenerator;
+begin
+  Generator := TJsonToCSharpGenerator.Create;
+  try
+    Generator.Parse('{"matrix":[[1,null],[2,3],[]],' +
+      '"people":[[{"name":"Ada"}],[{"name":"Grace","age":37}]]}');
+    TFile.WriteAllText(AFileName, Generator.GenerateSource, TEncoding.UTF8);
+  finally
+    Generator.Free;
+  end;
+end;
 
 destructor TMatrixDTO.Destroy;
 begin
-  GetMatrix.Free;
+  FMatrix.Free;
   inherited;
 end;
 
 function TMatrixDTO.GetAsJson: string;
 begin
-  RefreshArray2D<Integer>(FMatrix, FMatrixArray);
+  if FMatrix <> nil then
+    FMatrixArray := FMatrix.ToArray;
   Result := inherited;
 end;
 
-function TMatrixDTO.GetMatrix: TObjectList<TList<Integer>>;
+function TMatrixDTO.GetMatrix: TMatrix<Integer>;
 begin
-  Result := List2D<Integer>(FMatrix, FMatrixArray);
+  if FMatrix = nil then
+    FMatrix := TMatrix<Integer>.Create(FMatrixArray);
+  Result := FMatrix;
+end;
+
+destructor TObjectMatrixDTO.Destroy;
+begin
+  FPeople.Free;
+  inherited;
+end;
+
+function TObjectMatrixDTO.GetAsJson: string;
+begin
+  Result := inherited;
+  Result := SaveObjectMatrix<TMatrixPerson>(FPeople, Result, 'people');
+end;
+
+function TObjectMatrixDTO.GetPeople: TObjectMatrix<TMatrixPerson>;
+begin
+  if FPeople = nil then
+    FPeople := TObjectMatrix<TMatrixPerson>.Create;
+  Result := FPeople;
+end;
+
+procedure TObjectMatrixDTO.SetAsJson(aValue: string);
+begin
+  GetPeople;
+  LoadObjectMatrix<TMatrixPerson>(FPeople, aValue, 'people');
 end;
 
 procedure Check(ACondition: Boolean; const AMessage: string);
@@ -149,8 +215,9 @@ begin
     Generator.Parse('[[1,2],[3,4]]');
     Source := Generator.GenerateUnit;
     Check(Source.Contains('FItemsArray: TArray<TArray<Integer>>;'), '2D array bridge must preserve the JSON array shape');
-    Check(Source.Contains('property Items: TObjectList<TList<Integer>>'), '2D arrays must be exposed as lists');
-    Check(Source.Contains('RefreshArray2D<Integer>'), '2D lists must be synchronized before serialization');
+    Check(Source.Contains('property Items: TMatrix<Integer>'), '2D arrays must be exposed as matrices');
+    Check(Source.Contains('FItemsArray := FItems.ToArray;'), 'Matrices must be synchronized before serialization');
+    Check(not Source.Contains('List2D'), 'Generated code must not use the removed List2D API');
   finally
     Generator.Free;
   end;
@@ -163,12 +230,15 @@ var
 begin
   DTO := TMatrixDTO.Create;
   try
-    DTO.AsJson := '{"matrix":[[1,2],[3,4]]}';
-    Check(DTO.Matrix.Count = 2, '2D JSON must create two list rows');
+    DTO.AsJson := '{"matrix":[[1,2],[3,4],[]]}';
+    Check(DTO.Matrix.Count = 3, '2D JSON must create all matrix rows');
+    Check(DTO.Matrix[2].Count = 0, '2D JSON must preserve empty rows');
     Check(DTO.Matrix[1][0] = 3, '2D JSON values must deserialize');
     DTO.Matrix[1][0] := 30;
+    DTO.Matrix.Add(TList<Integer>.Create);
+    DTO.Matrix[3].Add(9);
     Json := DTO.AsJson;
-    Check(Json.Contains('[[1,2],[30,4]]'), 'Changed 2D list values must serialize as nested JSON arrays');
+    Check(Json.Contains('[[1,2],[30,4],[],[9]]'), 'Changed matrix values must serialize as nested JSON arrays');
   finally
     DTO.Free;
   end;
@@ -430,6 +500,97 @@ begin
   end;
 end;
 
+procedure TestTwoDimensionalObjectArrayRuntime;
+var
+  DTO: TObjectMatrixDTO;
+  Json: string;
+begin
+  DTO := TObjectMatrixDTO.Create;
+  try
+    DTO.AsJson := '{"people":[[{"name":"Ada"}],[{"name":"Grace","age":37}]]}';
+    Check(DTO.People.Count = 2, '2D object JSON must create two rows');
+    Check(DTO.People[0][0].Name = 'Ada', '2D object values must deserialize');
+    Check(DTO.People[1][0].Age = 37, 'Merged object fields must deserialize across rows');
+    DTO.People[1][0].Name := 'Hopper';
+    Json := DTO.AsJson;
+    Check(Json.Contains('"name":"Hopper"'),
+      'Changed 2D object values must serialize');
+  finally
+    DTO.Free;
+  end;
+end;
+
+procedure TestMatrixDemoGeneration;
+const
+  DemoNames: array[0..3] of string = (
+    'Matrix - Numbers.json',
+    'Matrix - Objects.json',
+    'Matrix - Jagged.json',
+    'Matrix - Nullable.json');
+var
+  CSharpGenerator: TJsonToCSharpGenerator;
+  DelphiGenerator: TJsonToDelphiGenerator;
+  DemoName: string;
+  Json: string;
+begin
+  for DemoName in DemoNames do
+  begin
+    Json := TDemoDataRepository.Load(DemoName);
+    DelphiGenerator := TJsonToDelphiGenerator.Create;
+    try
+      DelphiGenerator.Parse(Json);
+      Check(DelphiGenerator.GenerateUnit.Contains('Matrix<'),
+        DemoName + ' did not generate a Delphi matrix');
+    finally
+      DelphiGenerator.Free;
+    end;
+
+    CSharpGenerator := TJsonToCSharpGenerator.Create;
+    try
+      CSharpGenerator.Parse(Json);
+      Check(CSharpGenerator.GenerateSource.Contains('Matrix<'),
+        DemoName + ' did not generate a C# matrix');
+    finally
+      CSharpGenerator.Free;
+    end;
+  end;
+end;
+
+procedure TestTypeUnificationDemoData;
+var
+  DataType: TGeneratorType;
+  Generator: TJsonToDelphiGenerator;
+  ItemClass: TGeneratorClass;
+begin
+  Generator := TJsonToDelphiGenerator.Create;
+  try
+    Generator.Parse(TDemoDataRepository.Load('Type Unification - Numbers.json'));
+    ItemClass := Generator.Model.RootClass.FindField('measurements').DataType.ElementType.ObjectClass;
+    Check(ItemClass.FindField('value').DataType.SemanticKind = svkFloat,
+      'Numeric demo must unify Integer, Int64 and Float to Float');
+
+    Generator.Parse(TDemoDataRepository.Load('Type Unification - Nullable.json'));
+    ItemClass := Generator.Model.RootClass.FindField('readings').DataType.ElementType.ObjectClass;
+    DataType := ItemClass.FindField('value').DataType;
+    Check((DataType.SemanticKind = svkInteger) and DataType.Nullable,
+      'Nullable demo must preserve the concrete type and mark it nullable');
+
+    Generator.Parse(TDemoDataRepository.Load('Type Unification - Objects.json'));
+    ItemClass := Generator.Model.RootClass.FindField('people').DataType.ElementType.ObjectClass;
+    Check(ItemClass.FindField('id').DataType.SemanticKind = svkInteger64,
+      'Object demo must unify field types');
+    Check(ItemClass.FindField('name').IsOptional and ItemClass.FindField('active').IsOptional and
+      ItemClass.FindField('email').IsOptional, 'Object demo must mark missing fields optional');
+
+    Generator.Parse(TDemoDataRepository.Load('Type Unification - Nested Arrays.json'));
+    DataType := Generator.Model.RootClass.FindField('matrix').DataType;
+    Check((DataType.ArrayDepth = 2) and (DataType.LeafType.SemanticKind = svkFloat) and
+      DataType.LeafType.Nullable, 'Nested array demo must recursively unify its leaf type');
+  finally
+    Generator.Free;
+  end;
+end;
+
 
 function GetGeneratorSmokeTests: TArray<TTestCase>;
 begin
@@ -439,6 +600,8 @@ begin
     TTestCase.Create('Empty array', TestEmptyArray),
     TTestCase.Create('Two-dimensional array', TestTwoDimensionalArray),
     TTestCase.Create('Two-dimensional array runtime', TestTwoDimensionalArrayRuntime),
+    TTestCase.Create('Two-dimensional object array runtime', TestTwoDimensionalObjectArrayRuntime),
+    TTestCase.Create('Matrix demo generation', TestMatrixDemoGeneration),
     TTestCase.Create('Language-independent model', TestLanguageIndependentModel),
     TTestCase.Create('Semantic type inference', TestSemanticTypeInference),
     TTestCase.Create('Delphi semantic type generation', TestDelphiSemanticTypeGeneration),
@@ -449,7 +612,8 @@ begin
     TTestCase.Create('C# options', TestCSharpOptions),
     TTestCase.Create('Settings serialization', TestSettingsSerialization),
     TTestCase.Create('Demo data discovery', TestDemoDataDiscovery),
-    TTestCase.Create('Semantic demo data', TestSemanticDemoData)
+    TTestCase.Create('Semantic demo data', TestSemanticDemoData),
+    TTestCase.Create('Type unification demo data', TestTypeUnificationDemoData)
   ];
 end;
 

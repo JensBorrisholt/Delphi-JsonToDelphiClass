@@ -12,7 +12,7 @@ uses
 {$IFDEF VCL}
   Vcl.Controls, Vcl.Forms,
 {$IFEND}
-  JsonDoc.JsonTreeView;
+  Demo.JsonTreeView;
 
 Type
 {$IFDEF FMX}
@@ -50,7 +50,7 @@ var
   @@ClassName@@: T@@ClassName@@;
 begin
   @@ClassName@@ := GetObject;
-  with TJSONTreeView.Create(aTarget, @@ClassName@@.AsJson) do
+  with TJsonTreeView.Create(aTarget, @@ClassName@@.AsJson) do
   begin
 {$IFDEF FMX}
     Parent := aTarget;

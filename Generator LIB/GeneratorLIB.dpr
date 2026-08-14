@@ -2,19 +2,20 @@ library GeneratorLIB;
 
 uses
   System.SysUtils,
-  Pkg.Json.Generator.Settings in 'Core\Pkg.Json.Generator.Settings.pas',
-  Pkg.Json.Generator.Delphi in 'Delphi\Pkg.Json.Generator.Delphi.pas',
-  Pkg.Json.Generator.Builder in 'Core\Pkg.Json.Generator.Builder.pas',
-  Pkg.Json.Generator.Errors in 'Core\Pkg.Json.Generator.Errors.pas',
-  Pkg.Json.Generator.Validation in 'Core\Pkg.Json.Generator.Validation.pas',
-  Pkg.Json.Generator.DelphiWriter in 'Delphi\Pkg.Json.Generator.DelphiWriter.pas',
-  Pkg.Json.Generator.Model in 'Core\Pkg.Json.Generator.Model.pas',
-  Pkg.Json.Generator.DelphiNaming in 'Delphi\Pkg.Json.Generator.DelphiNaming.pas',
-  Pkg.Json.Generator.DelphiSettings in 'Delphi\Pkg.Json.Generator.DelphiSettings.pas',
-  Pkg.Json.Generator.CSharp in 'CSharp\Pkg.Json.Generator.CSharp.pas',
-  Pkg.Json.Generator.CSharpNaming in 'CSharp\Pkg.Json.Generator.CSharpNaming.pas',
-  Pkg.Json.Generator.CSharpSettings in 'CSharp\Pkg.Json.Generator.CSharpSettings.pas',
-  Pkg.Json.Generator.CSharpWriter in 'CSharp\Pkg.Json.Generator.CSharpWriter.pas';
+  JsonToDelphi.Generator.Core.Settings in 'Core\JsonToDelphi.Generator.Core.Settings.pas',
+  JsonToDelphi.Generator.Delphi in 'Delphi\JsonToDelphi.Generator.Delphi.pas',
+  JsonToDelphi.Generator.Core.Builder in 'Core\JsonToDelphi.Generator.Core.Builder.pas',
+  JsonToDelphi.Generator.Core.Errors in 'Core\JsonToDelphi.Generator.Core.Errors.pas',
+  JsonToDelphi.Generator.Core.Validation in 'Core\JsonToDelphi.Generator.Core.Validation.pas',
+  JsonToDelphi.Generator.Core.TypeUnification in 'Core\JsonToDelphi.Generator.Core.TypeUnification.pas',
+  JsonToDelphi.Generator.Delphi.Writer in 'Delphi\JsonToDelphi.Generator.Delphi.Writer.pas',
+  JsonToDelphi.Generator.Core.Model in 'Core\JsonToDelphi.Generator.Core.Model.pas',
+  JsonToDelphi.Generator.Delphi.Naming in 'Delphi\JsonToDelphi.Generator.Delphi.Naming.pas',
+  JsonToDelphi.Generator.Delphi.Settings in 'Delphi\JsonToDelphi.Generator.Delphi.Settings.pas',
+  JsonToDelphi.Generator.CSharp in 'CSharp\JsonToDelphi.Generator.CSharp.pas',
+  JsonToDelphi.Generator.CSharp.Naming in 'CSharp\JsonToDelphi.Generator.CSharp.Naming.pas',
+  JsonToDelphi.Generator.CSharp.Settings in 'CSharp\JsonToDelphi.Generator.CSharp.Settings.pas',
+  JsonToDelphi.Generator.CSharp.Writer in 'CSharp\JsonToDelphi.Generator.CSharp.Writer.pas';
 
 function GenerateUnit(Settings: WideString; Json: WideString; out SourceFile: WideString): WordBool; stdcall;
 var

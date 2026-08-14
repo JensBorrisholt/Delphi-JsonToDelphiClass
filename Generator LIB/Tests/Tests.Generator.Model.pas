@@ -22,7 +22,7 @@ type
 implementation
 
 uses
-  Pkg.Json.Generator.Model;
+  JsonToDelphi.Generator.Core.Model;
 
 procedure TGeneratorModelTests.GeneratorTypeStoresKinds;
 var
