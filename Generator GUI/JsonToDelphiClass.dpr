@@ -1,19 +1,20 @@
 program JsonToDelphiClass;
 
 {$R 'DemoTemplate.res' '..\Components\DemoTemplate.rc'}
+{$R 'JSON_PAS.res' '..\Runtime\JSON_PAS.rc'}
 
 uses
   Vcl.Forms,
-  Pkg.Json.GeneratorGUI.SettingsForm in 'Pkg.Json.GeneratorGUI.SettingsForm.pas' {SettingsForm},
-  Pkg.Json.Utils in '..\Lib\Pkg.Json.Utils.pas',
-  Pkg.Json.GeneratorGUI.MainForm in 'Pkg.Json.GeneratorGUI.MainForm.pas' {MainForm},
-  Pkg.Json.Syntax.Incremental in 'Syntax\Pkg.Json.Syntax.Incremental.pas',
-  Pkg.Json.Syntax.CSharp in 'Syntax\Pkg.Json.Syntax.CSharp.pas',
-  Pkg.Json.GeneratorGUI.Visualizer in '..\Components\Pkg.Json.GeneratorGUI.Visualizer.pas',
-  Pkg.Json.GeneratorGUI.DemoProject in '..\Components\Pkg.Json.GeneratorGUI.DemoProject.pas',
-  Pkg.Json.GeneratorGUI.DemoData in '..\Components\Pkg.Json.GeneratorGUI.DemoData.pas',
-  Pkg.Json.GeneratorGUI.UpdateForm in '..\Components\Pkg.Json.GeneratorGUI.UpdateForm.pas' {UpdateForm},
-  Pkg.Json.GeneratorGUI.GitHub in '..\Components\Pkg.Json.GeneratorGUI.GitHub.pas';
+  JsonToDelphi.GUI.SettingsForm in 'JsonToDelphi.GUI.SettingsForm.pas' {SettingsForm},
+  JsonToDelphi.Runtime.Utils in '..\Runtime\JsonToDelphi.Runtime.Utils.pas',
+  JsonToDelphi.GUI.MainForm in 'JsonToDelphi.GUI.MainForm.pas' {MainForm},
+  JsonToDelphi.GUI.Syntax.Incremental in 'Syntax\JsonToDelphi.GUI.Syntax.Incremental.pas',
+  JsonToDelphi.GUI.Syntax.CSharp in 'Syntax\JsonToDelphi.GUI.Syntax.CSharp.pas',
+  JsonToDelphi.GUI.Visualizer in '..\Components\JsonToDelphi.GUI.Visualizer.pas',
+  JsonToDelphi.GUI.DemoProject in '..\Components\JsonToDelphi.GUI.DemoProject.pas',
+  JsonToDelphi.GUI.DemoData in '..\Components\JsonToDelphi.GUI.DemoData.pas',
+  JsonToDelphi.GUI.UpdateForm in '..\Components\JsonToDelphi.GUI.UpdateForm.pas' {UpdateForm},
+  JsonToDelphi.GUI.GitHub in '..\Components\JsonToDelphi.GUI.GitHub.pas';
 
 {$R *.res}
 

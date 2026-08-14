@@ -34,6 +34,9 @@ type
     [Test] procedure GeneratesObjectGraph;
     [Test] procedure GeneratesPrimitiveRootArray;
     [Test] procedure GeneratesTwoDimensionalArray;
+    [Test] procedure GeneratesOwnedTwoDimensionalObjectArray;
+    [Test] procedure GeneratesNullableScalarMatrix;
+    [Test] procedure GeneratesStructurallyMergedObjectMatrix;
     [Test] procedure GeneratesSemanticTypes;
     [Test] procedure IncludesUriUnitOnlyWhenNeeded;
     [Test] procedure SuppressZeroDateCanBeDisabled;
@@ -45,9 +48,9 @@ implementation
 
 uses
   System.SysUtils,
-  Pkg.Json.Generator.Delphi,
-  Pkg.Json.Generator.DelphiNaming,
-  Pkg.Json.Generator.DelphiSettings;
+  JsonToDelphi.Generator.Delphi,
+  JsonToDelphi.Generator.Delphi.Naming,
+  JsonToDelphi.Generator.Delphi.Settings;
 
 procedure TDelphiSettingsTests.Defaults;
 var
@@ -260,6 +263,7 @@ begin
     Assert.IsTrue(Source.Contains('unit OrderDTO;'));
     Assert.IsTrue(Source.Contains('TOrder = class(TJsonDTO)'));
     Assert.IsTrue(Source.Contains('property Lines: TObjectList<TLines>'));
+    Assert.IsFalse(Source.Contains('JsonToDelphi.Runtime.Matrix'));
   finally
     Generator.Free;
   end;
@@ -288,8 +292,65 @@ begin
     Generator.Parse('[[1,2],[3,4]]');
     Source := Generator.GenerateUnit;
     Assert.IsTrue(Source.Contains('FItemsArray: TArray<TArray<Integer>>;'));
-    Assert.IsTrue(Source.Contains('property Items: TObjectList<TList<Integer>>'));
-    Assert.IsTrue(Source.Contains('RefreshArray2D<Integer>'));
+    Assert.IsTrue(Source.Contains('property Items: TMatrix<Integer>'));
+    Assert.IsTrue(Source.Contains('JsonToDelphi.Runtime.Matrix'));
+    Assert.IsTrue(Source.Contains('FItemsArray := FItems.ToArray;'));
+    Assert.IsFalse(Source.Contains('List2D'));
+    Assert.IsFalse(Source.Contains('RefreshArray2D'));
+  finally
+    Generator.Free;
+  end;
+end;
+
+procedure TDelphiGeneratorTests.GeneratesOwnedTwoDimensionalObjectArray;
+var
+  Generator: TJsonToDelphiGenerator;
+  Source: string;
+begin
+  Generator := TJsonToDelphiGenerator.Create;
+  try
+    Generator.Parse('{"people":[[{"name":"Ada"}],[{"name":"Grace"}]]}');
+    Source := Generator.GenerateUnit;
+    Assert.IsTrue(Source.Contains('FPeople: TObjectMatrix<TPeople>;'));
+    Assert.IsTrue(Source.Contains('property People: TObjectMatrix<TPeople>'));
+    Assert.IsTrue(Source.Contains('FPeople := TObjectMatrix<TPeople>.Create;'));
+    Assert.IsTrue(Source.Contains('LoadObjectMatrix<TPeople>'));
+    Assert.IsTrue(Source.Contains('SaveObjectMatrix<TPeople>'));
+    Assert.IsFalse(Source.Contains('FPeopleArray'));
+    Assert.IsFalse(Source.Contains('List2D'));
+    Assert.IsFalse(Source.Contains('RefreshArray2D'));
+  finally
+    Generator.Free;
+  end;
+end;
+
+procedure TDelphiGeneratorTests.GeneratesNullableScalarMatrix;
+var
+  Generator: TJsonToDelphiGenerator;
+  Source: string;
+begin
+  Generator := TJsonToDelphiGenerator.Create;
+  try
+    Generator.Parse('{"matrix":[[1,null],[2,3]]}');
+    Source := Generator.GenerateUnit;
+    Assert.IsTrue(Source.Contains('property Matrix: TMatrix<Integer>'));
+  finally
+    Generator.Free;
+  end;
+end;
+
+procedure TDelphiGeneratorTests.GeneratesStructurallyMergedObjectMatrix;
+var
+  Generator: TJsonToDelphiGenerator;
+  Source: string;
+begin
+  Generator := TJsonToDelphiGenerator.Create;
+  try
+    Generator.Parse('{"people":[[{"name":"Ada"}],[{"age":37}]]}');
+    Source := Generator.GenerateUnit;
+    Assert.IsTrue(Source.Contains('property People: TObjectMatrix<TPeople>'));
+    Assert.IsTrue(Source.Contains('property Name: string'));
+    Assert.IsTrue(Source.Contains('property Age: Integer'));
   finally
     Generator.Free;
   end;

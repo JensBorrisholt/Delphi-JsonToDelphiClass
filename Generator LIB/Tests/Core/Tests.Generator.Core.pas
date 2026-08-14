@@ -23,9 +23,9 @@ implementation
 
 uses
   System.IOUtils,
-  Pkg.Json.Generator.Errors,
-  Pkg.Json.Generator.DelphiSettings,
-  Pkg.Json.Generator.CSharpSettings;
+  JsonToDelphi.Generator.Core.Errors,
+  JsonToDelphi.Generator.Delphi.Settings,
+  JsonToDelphi.Generator.CSharp.Settings;
 
 procedure TGeneratorErrorTests.CreateAtStoresLocation;
 var

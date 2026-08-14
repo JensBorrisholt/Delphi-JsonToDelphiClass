@@ -88,7 +88,7 @@ namespace Json2Delphi.Web.Controllers
         [Route("Convert/DownloadDTO")]
         public ActionResult DownloadDTO()
         {
-            var attachment = "Pkg.Json.DTO.pas";
+            var attachment = "JsonToDelphi.Runtime.DTO.pas";
             var path = Path.Combine(Directory.GetCurrentDirectory(), attachment);
             var fileBytes = System.IO.File.ReadAllBytes(path);
             return File(fileBytes, "application/x-msdownload", attachment);

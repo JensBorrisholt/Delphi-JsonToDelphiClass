@@ -1,0 +1,7 @@
+{
+  "measurements": [
+    { "value": 1 },
+    { "value": 2147483648 },
+    { "value": 2.5 }
+  ]
+}

@@ -57,7 +57,7 @@
         <DCC_ImageBase>00400000</DCC_ImageBase>
         <SanitizedProjectName>JsonToDelphiClass</SanitizedProjectName>
         <DCC_Namespace>Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
-        <DCC_UnitSearchPath>Syntax;..\Components;..\Generator LIB\Core;..\Generator LIB\Delphi;..\Generator LIB\CSharp;..\Lib;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>Syntax;..\Components;..\Generator LIB\Core;..\Generator LIB\Delphi;..\Generator LIB\CSharp;..\Runtime;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=4.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=4.0.0.0;Comments=;CFBundleName=</VerInfo_Keys>
         <DCC_FrameworkPath>.\Syntax;..\Components;$(DCC_FrameworkPath)</DCC_FrameworkPath>
@@ -106,23 +106,25 @@
         <RcCompile Include="..\Components\DemoTemplate.rc">
             <Form>DemoTemplate.res</Form>
         </RcCompile>
-        <DCCReference Include="Pkg.Json.GeneratorGUI.SettingsForm.pas">
+        <RcCompile Include="..\Runtime\JSON_PAS.rc">
+            <Form>JSON_PAS.res</Form>
+        </RcCompile>
+        <DCCReference Include="JsonToDelphi.GUI.SettingsForm.pas">
             <Form>SettingsForm</Form>
         </DCCReference>
-        <DCCReference Include="..\Lib\Pkg.Json.Utils.pas"/>
-        <DCCReference Include="Pkg.Json.GeneratorGUI.MainForm.pas">
+        <DCCReference Include="..\Runtime\JsonToDelphi.Runtime.Utils.pas"/>
+        <DCCReference Include="JsonToDelphi.GUI.MainForm.pas">
             <Form>MainForm</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="Syntax\Pkg.Json.Syntax.Incremental.pas"/>
-        <DCCReference Include="Syntax\Pkg.Json.Syntax.CSharp.pas"/>
-        <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.Visualizer.pas"/>
-        <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.DemoProject.pas"/>
-        <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.DemoData.pas"/>
-        <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.UpdateForm.pas">
+        <DCCReference Include="Syntax\JsonToDelphi.GUI.Syntax.Incremental.pas"/>
+        <DCCReference Include="Syntax\JsonToDelphi.GUI.Syntax.CSharp.pas"/>
+        <DCCReference Include="..\Components\JsonToDelphi.GUI.Visualizer.pas"/>
+        <DCCReference Include="..\Components\JsonToDelphi.GUI.DemoProject.pas"/>
+        <DCCReference Include="..\Components\JsonToDelphi.GUI.DemoData.pas"/>
+        <DCCReference Include="..\Components\JsonToDelphi.GUI.UpdateForm.pas">
             <Form>UpdateForm</Form>
         </DCCReference>
-        <DCCReference Include="..\Components\Pkg.Json.GeneratorGUI.GitHub.pas"/>
+        <DCCReference Include="..\Components\JsonToDelphi.GUI.GitHub.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

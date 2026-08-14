@@ -4,7 +4,7 @@ interface
 
 uses
   DUnitX.TestFramework,
-  Pkg.Json.Generator.Model;
+  JsonToDelphi.Generator.Core.Model;
 
 type
   [TestFixture]
@@ -29,6 +29,15 @@ type
     [Test] procedure BuildsTwoDimensionalArray;
     [Test] procedure RejectsMoreThanTwoDimensions;
     [Test] procedure MarksMissingObjectMembersOptional;
+    [Test] procedure PromotesArrayNumbersIndependentlyOfOrder;
+    [Test] procedure MergesNullWithConcreteArrayElement;
+    [Test] procedure MergesObjectArrayStructures;
+    [Test] procedure MergesNestedArrayElementTypes;
+    [Test] procedure BuildsObjectMatrixModel;
+    [Test] procedure MergesObjectMatrixRowsIndependentlyOfOrder;
+    [Test] procedure PreservesNullableObjectMatrixLeaf;
+    [Test] procedure ReportsNestedMatrixConflictPathAndRange;
+    [Test] procedure ReportsSemanticConflictPathAndRange;
     [Test] procedure RetainsSourcePathAndRange;
   end;
 
@@ -36,8 +45,8 @@ implementation
 
 uses
   System.SysUtils,
-  Pkg.Json.Generator.Builder,
-  Pkg.Json.Generator.Errors;
+  JsonToDelphi.Generator.Core.Builder,
+  JsonToDelphi.Generator.Core.Errors;
 
 procedure TGeneratorBuilderTests.AssertSemanticKind(const AJson, AFieldName: string; AExpected: TSemanticValueKind);
 var
@@ -332,6 +341,231 @@ begin
       Assert.IsNotNull(Rows);
       Assert.IsTrue(Rows.FindField('a').IsOptional);
       Assert.IsTrue(Rows.FindField('b').IsOptional);
+    finally
+      Builder.Free;
+    end;
+  finally
+    Model.Free;
+  end;
+end;
+
+procedure TGeneratorBuilderTests.PromotesArrayNumbersIndependentlyOfOrder;
+var
+  Builder: TJsonModelBuilder;
+  Model: TGeneratorModel;
+begin
+  Model := TGeneratorModel.Create;
+  try
+    Builder := TJsonModelBuilder.Create(Model);
+    try
+      Builder.Build('{"values":[1,2147483648,2.5]}', 'Root');
+      Assert.IsTrue(Model.RootClass.FindField('values').DataType.LeafType.SemanticKind = svkFloat);
+      Builder.Build('{"values":[2.5,2147483648,1]}', 'Root');
+      Assert.IsTrue(Model.RootClass.FindField('values').DataType.LeafType.SemanticKind = svkFloat);
+    finally
+      Builder.Free;
+    end;
+  finally
+    Model.Free;
+  end;
+end;
+
+procedure TGeneratorBuilderTests.MergesNullWithConcreteArrayElement;
+var
+  Builder: TJsonModelBuilder;
+  DataType: TGeneratorType;
+  Model: TGeneratorModel;
+begin
+  Model := TGeneratorModel.Create;
+  try
+    Builder := TJsonModelBuilder.Create(Model);
+    try
+      Builder.Build('{"values":[null,1,null]}', 'Root');
+      DataType := Model.RootClass.FindField('values').DataType.ElementType;
+      Assert.IsTrue(DataType.SemanticKind = svkInteger);
+      Assert.IsTrue(DataType.Nullable);
+    finally
+      Builder.Free;
+    end;
+  finally
+    Model.Free;
+  end;
+end;
+
+procedure TGeneratorBuilderTests.MergesObjectArrayStructures;
+var
+  Builder: TJsonModelBuilder;
+  Model: TGeneratorModel;
+  RowClass: TGeneratorClass;
+begin
+  Model := TGeneratorModel.Create;
+  try
+    Builder := TJsonModelBuilder.Create(Model);
+    try
+      Builder.Build('{"rows":[{"id":1,"name":"Ada"},{"id":2147483648,"active":true}]}', 'Root');
+      RowClass := Model.RootClass.FindField('rows').DataType.ElementType.ObjectClass;
+      Assert.IsNotNull(RowClass.FindField('id'));
+      Assert.IsTrue(RowClass.FindField('id').DataType.SemanticKind = svkInteger64);
+      Assert.IsTrue(RowClass.FindField('name').IsOptional);
+      Assert.IsTrue(RowClass.FindField('active').IsOptional);
+    finally
+      Builder.Free;
+    end;
+  finally
+    Model.Free;
+  end;
+end;
+
+procedure TGeneratorBuilderTests.MergesNestedArrayElementTypes;
+var
+  Builder: TJsonModelBuilder;
+  Model: TGeneratorModel;
+begin
+  Model := TGeneratorModel.Create;
+  try
+    Builder := TJsonModelBuilder.Create(Model);
+    try
+      Builder.Build('{"matrix":[[1,2],[3.5,4]]}', 'Root');
+      Assert.IsTrue(Model.RootClass.FindField('matrix').DataType.LeafType.SemanticKind = svkFloat);
+    finally
+      Builder.Free;
+    end;
+  finally
+    Model.Free;
+  end;
+end;
+
+procedure TGeneratorBuilderTests.BuildsObjectMatrixModel;
+var
+  Builder: TJsonModelBuilder;
+  DataType: TGeneratorType;
+  Model: TGeneratorModel;
+  PersonClass: TGeneratorClass;
+begin
+  Model := TGeneratorModel.Create;
+  try
+    Builder := TJsonModelBuilder.Create(Model);
+    try
+      Builder.Build('{"people":[[{"name":"Ada"}],[{"name":"Grace"}]]}', 'Root');
+      DataType := Model.RootClass.FindField('people').DataType;
+      Assert.AreEqual<Integer>(2, DataType.ArrayDepth);
+      Assert.IsTrue(DataType.JsonKind = jvkArray);
+      Assert.IsTrue(DataType.ElementType.JsonKind = jvkArray);
+      Assert.IsTrue(DataType.LeafType.JsonKind = jvkObject);
+      PersonClass := DataType.LeafType.ObjectClass;
+      Assert.IsNotNull(PersonClass);
+      Assert.IsNotNull(PersonClass.FindField('name'));
+    finally
+      Builder.Free;
+    end;
+  finally
+    Model.Free;
+  end;
+end;
+
+procedure TGeneratorBuilderTests.MergesObjectMatrixRowsIndependentlyOfOrder;
+
+  procedure Verify(const AJson: string);
+  var
+    Builder: TJsonModelBuilder;
+    Model: TGeneratorModel;
+    PersonClass: TGeneratorClass;
+  begin
+    Model := TGeneratorModel.Create;
+    try
+      Builder := TJsonModelBuilder.Create(Model);
+      try
+        Builder.Build(AJson, 'Root');
+        PersonClass := Model.RootClass.FindField('people').DataType.LeafType.ObjectClass;
+        Assert.IsTrue(PersonClass.FindField('id').DataType.SemanticKind = svkInteger64);
+        Assert.IsTrue(PersonClass.FindField('name').IsOptional);
+        Assert.IsTrue(PersonClass.FindField('active').IsOptional);
+      finally
+        Builder.Free;
+      end;
+    finally
+      Model.Free;
+    end;
+  end;
+
+begin
+  Verify('{"people":[[{"id":1,"name":"Ada"}],[{"id":2147483648,"active":true}]]}');
+  Verify('{"people":[[{"id":2147483648,"active":true}],[{"id":1,"name":"Ada"}]]}');
+end;
+
+procedure TGeneratorBuilderTests.PreservesNullableObjectMatrixLeaf;
+var
+  Builder: TJsonModelBuilder;
+  DataType: TGeneratorType;
+  Model: TGeneratorModel;
+begin
+  Model := TGeneratorModel.Create;
+  try
+    Builder := TJsonModelBuilder.Create(Model);
+    try
+      Builder.Build('{"people":[[null],[{"name":"Ada"}]]}', 'Root');
+      DataType := Model.RootClass.FindField('people').DataType.LeafType;
+      Assert.IsTrue(DataType.JsonKind = jvkObject);
+      Assert.IsTrue(DataType.Nullable);
+      Assert.IsNotNull(DataType.ObjectClass.FindField('name'));
+    finally
+      Builder.Free;
+    end;
+  finally
+    Model.Free;
+  end;
+end;
+
+procedure TGeneratorBuilderTests.ReportsNestedMatrixConflictPathAndRange;
+const
+  Json = '{"matrix":[[1,2],["three",4]]}';
+var
+  Builder: TJsonModelBuilder;
+  Model: TGeneratorModel;
+begin
+  Model := TGeneratorModel.Create;
+  try
+    Builder := TJsonModelBuilder.Create(Model);
+    try
+      try
+        Builder.Build(Json, 'Root');
+        Assert.Fail('Expected EJsonGenerator');
+      except
+        on E: EJsonGenerator do
+        begin
+          Assert.AreEqual('$.matrix[1][1]', E.JsonPath);
+          Assert.AreEqual('4', Copy(Json, E.Position + 1, E.SelectionLength));
+        end;
+      end;
+    finally
+      Builder.Free;
+    end;
+  finally
+    Model.Free;
+  end;
+end;
+
+procedure TGeneratorBuilderTests.ReportsSemanticConflictPathAndRange;
+const
+  Json = '{"values":[1,"two"]}';
+var
+  Builder: TJsonModelBuilder;
+  Model: TGeneratorModel;
+begin
+  Model := TGeneratorModel.Create;
+  try
+    Builder := TJsonModelBuilder.Create(Model);
+    try
+      try
+        Builder.Build(Json, 'Root');
+        Assert.Fail('Expected EJsonGenerator');
+      except
+        on E: EJsonGenerator do
+        begin
+          Assert.AreEqual('$.values[1]', E.JsonPath);
+          Assert.AreEqual('"two"', Copy(Json, E.Position + 1, E.SelectionLength));
+        end;
+      end;
     finally
       Builder.Free;
     end;

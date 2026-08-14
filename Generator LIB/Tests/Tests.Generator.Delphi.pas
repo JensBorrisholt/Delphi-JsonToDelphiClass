@@ -45,9 +45,9 @@ implementation
 
 uses
   System.SysUtils,
-  Pkg.Json.Generator.Delphi,
-  Pkg.Json.Generator.DelphiNaming,
-  Pkg.Json.Generator.DelphiSettings;
+  JsonToDelphi.Generator.Delphi,
+  JsonToDelphi.Generator.Delphi.Naming,
+  JsonToDelphi.Generator.Delphi.Settings;
 
 procedure TDelphiSettingsTests.Defaults;
 var
@@ -288,8 +288,8 @@ begin
     Generator.Parse('[[1,2],[3,4]]');
     Source := Generator.GenerateUnit;
     Assert.IsTrue(Source.Contains('FItemsArray: TArray<TArray<Integer>>;'));
-    Assert.IsTrue(Source.Contains('property Items: TObjectList<TList<Integer>>'));
-    Assert.IsTrue(Source.Contains('RefreshArray2D<Integer>'));
+    Assert.IsTrue(Source.Contains('property Items: TMatrix<Integer>'));
+    Assert.IsTrue(Source.Contains('FItemsArray := FItems.ToArray;'));
   finally
     Generator.Free;
   end;

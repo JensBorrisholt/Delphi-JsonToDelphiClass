@@ -42,9 +42,9 @@ implementation
 
 uses
   System.SysUtils,
-  Pkg.Json.Generator.CSharp,
-  Pkg.Json.Generator.CSharpNaming,
-  Pkg.Json.Generator.CSharpSettings;
+  JsonToDelphi.Generator.CSharp,
+  JsonToDelphi.Generator.CSharp.Naming,
+  JsonToDelphi.Generator.CSharp.Settings;
 
 procedure TCSharpSettingsTests.Defaults;
 var
@@ -230,7 +230,7 @@ begin
     Generator.Parse('{"ids":[1,2],"matrix":[[1,2],[3,4]]}');
     Source := Generator.GenerateSource;
     Assert.IsTrue(Source.Contains('List<int> Ids'));
-    Assert.IsTrue(Source.Contains('List<List<int>> Matrix'));
+    Assert.IsTrue(Source.Contains('Matrix<int> Matrix'));
   finally
     Generator.Free;
   end;

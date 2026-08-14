@@ -5,12 +5,13 @@ program LegacyCompatibilityTests;
 uses
   System.Classes,
   System.SysUtils,
-  Pkg.Json.Mapper,
-  Pkg.Json.Generator.Delphi in '..\Delphi\Pkg.Json.Generator.Delphi.pas',
-  Pkg.Json.Generator.Builder in '..\Core\Pkg.Json.Generator.Builder.pas',
-  Pkg.Json.Generator.DelphiWriter in '..\Delphi\Pkg.Json.Generator.DelphiWriter.pas',
-  Pkg.Json.Generator.Model in '..\Core\Pkg.Json.Generator.Model.pas',
-  Pkg.Json.Generator.DelphiSettings in '..\Delphi\Pkg.Json.Generator.DelphiSettings.pas',
+  JsonToDelphi.Runtime.Mapper,
+  JsonToDelphi.Generator.Delphi in '..\Delphi\JsonToDelphi.Generator.Delphi.pas',
+  JsonToDelphi.Generator.Core.Builder in '..\Core\JsonToDelphi.Generator.Core.Builder.pas',
+  JsonToDelphi.Generator.Core.TypeUnification in '..\Core\JsonToDelphi.Generator.Core.TypeUnification.pas',
+  JsonToDelphi.Generator.Delphi.Writer in '..\Delphi\JsonToDelphi.Generator.Delphi.Writer.pas',
+  JsonToDelphi.Generator.Core.Model in '..\Core\JsonToDelphi.Generator.Core.Model.pas',
+  JsonToDelphi.Generator.Delphi.Settings in '..\Delphi\JsonToDelphi.Generator.Delphi.Settings.pas',
   TestConsoleRunner in 'TestConsoleRunner.pas';
 
 function NormalizeWhitespace(const ASource: string): string;
